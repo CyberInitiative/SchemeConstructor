@@ -5,6 +5,7 @@
 .button{
     -fx-pref-height: 55;
     -fx-pref-width: 55;
+    
 }
 
 #www:focused {

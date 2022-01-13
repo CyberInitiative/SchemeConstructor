@@ -3,26 +3,36 @@ package com.gluonapplication.views;
 import com.gluonhq.charm.glisten.application.MobileApplication;
 import com.gluonhq.charm.glisten.control.AppBar;
 import com.gluonhq.charm.glisten.mvc.View;
+import java.util.ArrayList;
+import java.util.List;
 import javafx.animation.AnimationTimer;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.shape.Line;
+import models.Connector;
 import models.ConnectorsManagmentState;
 import models.ElementManagmentState;
 import models.Element;
 import models.Grid;
+import models.ObserverInterface;
+import models.PathPoint;
+import models.PathPointsManager;
+import models.Socket;
 import models.State;
+import models.VariableBlock;
 
 public class PrimaryPresenter {
 
@@ -54,7 +64,17 @@ public class PrimaryPresenter {
     private int frameTimeIndex = 0;
     private boolean arrayFilled = false;
     public static ObservableList<Element> elements = FXCollections.observableArrayList();
-    private State currentState = new ElementManagmentState();
+    public static ObservableList<VariableBlock> blocks = FXCollections.observableArrayList();
+    public static ObservableList<Connector> connectors = FXCollections.observableArrayList();
+    public static PathPointsManager pointManager = new PathPointsManager();
+    public static List<ObserverInterface> sockets = new ArrayList<>();
+
+    private final ConnectorsManagmentState connState = new ConnectorsManagmentState();
+    private final ElementManagmentState elemState = new ElementManagmentState();
+    private State currentState = elemState;
+
+    @FXML
+    Button addElement;
 
     @FXML
     private Label label = new Label();
@@ -78,9 +98,29 @@ public class PrimaryPresenter {
     };
 
     public void initialize() {
+        pointManager.generatePoints(workingSpace.getPrefWidth(), workingSpace.getPrefHeight(), 10, 10);
+        //pointManager.setOpenedList(pointManager.getAllPathPoints());        
+        Image img = new Image("plusEl.png");
+        ImageView view = new ImageView(img);
+        //System.out.println(pointManager.getPathPoints());
+
+        addElement.setGraphic(view);
         frameRateMeter.start();
-        grid = new Grid(workingSpace.getPrefWidth(), workingSpace.getPrefHeight(), 12.5, 12.5, workingSpace);
+        grid = new Grid(workingSpace.getPrefWidth(), workingSpace.getPrefHeight(), 10, 10, workingSpace);
         grid.drawGrid();
+
+//        for (int i = 0; i < pointManager.getAllPoints().length; i++) {
+//            for (int j = 0; j < pointManager.getAllPoints()[0].length; j++) {
+//                for(Element elem : elements){
+//                    if(elem.getBoundsInParent().contains(pointManager.getAllPoints()[i][j])){
+//                        pointManager.getAllPoints()[i][j].setStatus(PathPoint.PathPointStatus.Obstructuion);
+//                        //System.out.println("OBSTR");
+//                    }
+//                }
+//                //System.out.println(pointManager.getAllPoints()[i][j]);
+//            }
+//        }
+        //workingSpace.getChildren().addAll(pointManager.getAllPoints());
         scrollPane.setContent(workingSpace);
         scrollPane.setId("www");
         //scrollPane.setStyle("-fx-focus-color: transparent;");
@@ -102,18 +142,79 @@ public class PrimaryPresenter {
                     }
                     for (Element additem : c.getAddedSubList()) {
                         workingSpace.getChildren().add(additem);
-                        additem.toFront();
-                        setPositionForNewElement(additem);
+//                        workingSpace.getChildren().add(additem.getBody());
+                        workingSpace.getChildren().add(additem.getOutputLine());
+                        workingSpace.getChildren().add(additem.getSymbol());
+                        workingSpace.getChildren().addAll(additem.getInputLines());
+                        workingSpace.getChildren().addAll(additem.getConnectionInputSockets());
+                        workingSpace.getChildren().add(additem.getConnectionOutputSocket());
+                        additem.getInputLines().addListener(new ListChangeListener<Line>() {
+                            @Override
+                            public void onChanged(ListChangeListener.Change<? extends Line> c) {
+                                while (c.next()) {
+                                    for (Line remitem : c.getRemoved()) {
+                                        workingSpace.getChildren().remove(remitem);
+                                    }
+                                    for (Line additem : c.getAddedSubList()) {
+                                        workingSpace.getChildren().add(additem);
+                                    }
+                                }
+                            }
+
+                        });
+                        additem.getConnectionInputSockets().addListener(new ListChangeListener<Socket>() {
+                            @Override
+                            public void onChanged(ListChangeListener.Change<? extends Socket> c) {
+                                while (c.next()) {
+                                    for (Socket remitem : c.getRemoved()) {
+                                        workingSpace.getChildren().remove(remitem);
+                                    }
+                                    for (Socket additem : c.getAddedSubList()) {
+                                        workingSpace.getChildren().add(additem);
+                                    }
+                                }
+                            }
+
+                        });
+                    }
+                }
+            }
+        });
+
+        blocks.addListener(new ListChangeListener<VariableBlock>() {
+            @Override
+            public void onChanged(ListChangeListener.Change<? extends VariableBlock> c) {
+                while (c.next()) {
+                    for (VariableBlock remitem : c.getRemoved()) {
+                        workingSpace.getChildren().remove(remitem);
+                    }
+                    for (VariableBlock additem : c.getAddedSubList()) {
+                        workingSpace.getChildren().add(additem);
+                        workingSpace.getChildren().add(additem.getSymbol());
+                        workingSpace.getChildren().add(additem.getInputLine());
+                        workingSpace.getChildren().add(additem.getConnectionInputSocket());
                     }
                 }
             }
 
         });
-        if (!elements.isEmpty()) {
-            elements.get(0).layoutXProperty().addListener((obj, oldValue, newValue) -> {
-                System.out.println("X " + newValue);
-            });
-        }
+
+        connectors.addListener(new ListChangeListener<Connector>() {
+            @Override
+            public void onChanged(ListChangeListener.Change<? extends Connector> c) {
+                while (c.next()) {
+                    for (Connector remitem : c.getRemoved()) {
+//                        contollPane.getChildren().remove(remitem);
+                    }
+                    for (Connector additem : c.getAddedSubList()) {
+
+                        additem.add(workingSpace);
+                    }
+                }
+            }
+
+        });
+
         clickEvent();
         pressEvent();
         dragEvent();
@@ -132,15 +233,20 @@ public class PrimaryPresenter {
         element.setLayoutX(currentCenter.getX() + 75);
         element.setLayoutY(currentCenter.getY());
         //System.out.println(element.getChildren().get(0).getLayoutY());
-        int gridx = (int) element.getLayoutX() / 24;
-        int gridy = (int) element.getLayoutY() / 24;
-        element.setLayoutX((25 / 30 + 25 * gridx));
-        element.setLayoutY((25 / 30 + 25 * gridy));
+        int gridx = (int) element.getLayoutX() / 10;
+        int gridy = (int) element.getLayoutY() / 10;
+        element.setLayoutX((10 * gridx));
+        element.setLayoutY((10 * gridy));
         //element.relocate(screenX, screenY);
         //System.out.println(element.getChildren().get(0).getLayoutX());
         //System.out.println(element.getChildren().get(0).getLayoutY());
         //Bounds bounds = element.localToScene(element.getChildren().get(0).getBoundsInLocal());
         //System.out.println(bounds);
+    }
+
+    @FXML
+    private void clearAll() {
+        workingSpace.getChildren().clear();
     }
 
     private Point2D getTrueCoordinates(Element node) {
@@ -150,79 +256,71 @@ public class PrimaryPresenter {
 
     private void clickEvent() {
         EventHandler<MouseEvent> eventHandler = (MouseEvent event) -> {
-            currentState.clickEvent(workingSpace);
+            currentState.clickProcessing(event);
         };
         workingSpace.addEventFilter(MouseEvent.MOUSE_CLICKED, eventHandler);
     }
 
     private void pressEvent() {
         EventHandler<MouseEvent> eventHandler = (MouseEvent event) -> {
-            currentState.pressEvent(workingSpace);
+            currentState.pressProcessing(event);
         };
         workingSpace.addEventFilter(MouseEvent.MOUSE_PRESSED, eventHandler);
     }
 
     private void dragEvent() {
         EventHandler<MouseEvent> eventHandler = (MouseEvent event) -> {
-            currentState.dragEvent(workingSpace, scrollPane);
+            currentState.dragProcessing(event);
         };
         workingSpace.addEventFilter(MouseEvent.MOUSE_DRAGGED, eventHandler);
     }
 
     private void releaseEvent() {
         EventHandler<MouseEvent> eventHandler = (MouseEvent event) -> {
-            currentState.releaseEvent(workingSpace);
+            currentState.releaseProcessing(event);
         };
         workingSpace.addEventFilter(MouseEvent.MOUSE_RELEASED, eventHandler);
     }
 
     @FXML
     public void pressElementConnectorManagmentTool() {
-        currentState = new ConnectorsManagmentState();
+        //currentState = new ConnectorsManagmentState(); 
+        currentState = connState;
     }
 
     @FXML
     public void pressElementManagerTool() {
-        currentState = new ElementManagmentState();
+        currentState = elemState;
     }
 
     @FXML
     private void addNewElement() {
-        Element element = new Element();
+        Element element = new Element(pointManager.getAllPoints());
+        element.setOwnerForSocket();
         elements.add(element);
     }
-}
-/*
-public void pressEvent() {
-        EventHandler<MouseEvent> eventHandler = (MouseEvent event) -> {
-            Object obj = event.getSource();
-            Element element = (Element) obj;
-            Element clonedElem = new Element();
-//            cloneFromToElement(element, clonedElem);
-            elements.add(clonedElem);
-            System.out.println("Element added");
-            System.out.println(elements.size());
-            double nodeMinX = element.getLayoutBounds().getMinX();
-            double nodeMinY = element.getLayoutBounds().getMinY();
-            Point2D nodeInScene = element.localToScene(nodeMinX, nodeMinY);
 
-            Point2D nodeInMarkerLocal = clonedElem.sceneToLocal(nodeInScene);
-            Point2D coorsOfAnchor = workingSpace.sceneToLocal(element.getCorX(), element.getCorY());
-            
-            Point2D nodeInMarkerParent = clonedElem.localToScene(nodeInMarkerLocal);
-
-            clonedElem.relocate(nodeInMarkerParent.getX(), nodeInMarkerParent.getY() + clonedElem.getLayoutBounds().getMinY());
-            clonedElem.setMouseX(event.getSceneX());
-            clonedElem.setMouseY(event.getSceneY());
-            clonedElem.toFront();
-
-            clonedElem.setCorX(clonedElem.getLayoutX());
-            clonedElem.setCorY(clonedElem.getLayoutY());
-
-        };
-
-        andPrototype.addEventFilter(MouseEvent.MOUSE_PRESSED, eventHandler);
-        orPrototype.addEventFilter(MouseEvent.MOUSE_PRESSED, eventHandler);
-        notPrototype.addEventFilter(MouseEvent.MOUSE_PRESSED, eventHandler);
+    @FXML
+    private void addNewVariableBlock() {
+        VariableBlock block = new VariableBlock(pointManager.getAllPoints());
+        block.setOwnerForSocket(block.getConnectionInputSocket());
+        blocks.add(block);
     }
- */
+
+    @FXML
+    private void getSocketInfo() {
+//        for (Element elem : elements) {
+//            System.out.println(elem.getConnectionInputSockets());
+//            System.out.println(elem.getConnectionOutputSocket());
+//            System.out.println("@@@@@@");
+//        }
+        elements.get(0).deleteInput();
+        System.out.println("DELETED");
+    }
+
+    @FXML
+    private void add() {
+        elements.get(0).addInput();
+        System.out.println("ADDED");
+    }
+}

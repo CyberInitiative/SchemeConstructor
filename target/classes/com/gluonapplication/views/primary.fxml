@@ -24,16 +24,20 @@
             <RowConstraints />
             <RowConstraints />
             <RowConstraints />
+            <RowConstraints />
+            <RowConstraints />
          </rowConstraints>
          <children>
             <Button mnemonicParsing="false" onAction="#pressElementManagerTool" text="ELEMENT ADD">
                <font>
                   <Font name="Consolas" size="6.0" />
                </font></Button>
-            <Button mnemonicParsing="false" onAction="#addNewElement" text="CREATE" GridPane.rowIndex="1" />
+            <Button fx:id="addElement" mnemonicParsing="false" onAction="#addNewElement" text="CREATE" GridPane.rowIndex="1" />
             <Button mnemonicParsing="false" onAction="#pressElementConnectorManagmentTool" text="Button" GridPane.rowIndex="2" />
-            <Button mnemonicParsing="false" text="Button" GridPane.rowIndex="3" />
-            <Button mnemonicParsing="false" text="Button" GridPane.rowIndex="4" />
+            <Button mnemonicParsing="false" onAction="#getSocketInfo" text="T DEL" GridPane.rowIndex="3" />
+            <Button mnemonicParsing="false" onAction="#clearAll" text="Clear" GridPane.rowIndex="4" />
+            <Button mnemonicParsing="false" onAction="#addNewVariableBlock" text="CR IO" GridPane.rowIndex="6" />
+            <Button mnemonicParsing="false" onAction="#add" text="T AD" GridPane.rowIndex="7" />
          </children>
       </GridPane>
    </left>

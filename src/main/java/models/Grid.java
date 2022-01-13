@@ -18,13 +18,13 @@ public class Grid {
         this.scene = scene;
     }
 
-    Pane scene;
+    private Pane scene;
     
-    double sceneHeight;
-    double sceneWidth;
+    private double sceneHeight;
+    private double sceneWidth;
 
-    double cellWidth;
-    double cellHeight;
+    private  double cellWidth;
+    private  double cellHeight;
 
     public Pane getScene() {
         return scene;
@@ -83,6 +83,6 @@ public class Grid {
             line.setStrokeWidth(1);
             line.setOpacity(0.50);
             line.toFront();
-        }
+        }      
     }
 }

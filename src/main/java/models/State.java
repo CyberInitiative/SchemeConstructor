@@ -1,9 +1,6 @@
 package models;
 
-import java.util.ArrayList;
-import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.ScrollPane;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 
 /**
@@ -11,10 +8,11 @@ import javafx.scene.layout.Pane;
  * @author Miroslav Levdikov
  */
 public abstract class State {
-    public abstract void clickEvent(Pane target);
-    public abstract void pressEvent(Pane target);
-    public abstract void dragEvent(Node target, ScrollPane scroll);
-    public abstract void releaseEvent(Node target);
+    public abstract void clickProcessing(MouseEvent event);
+    public abstract void pressProcessing(MouseEvent event);
+    public abstract void dragProcessing(MouseEvent event);
+    public abstract void releaseProcessing(MouseEvent event);
     public abstract void setControlls();
-    
+    public abstract void changeState(State change, State state);
+       
 }

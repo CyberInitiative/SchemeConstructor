@@ -1,15 +1,19 @@
 package models;
 
 import static com.gluonapplication.views.PrimaryPresenter.elements;
-//import static com.gluonapplication.views.PrimaryPresenter.scrollPane;
-import javafx.event.Event;
+import static com.gluonapplication.views.PrimaryPresenter.pointManager;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
-import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
-import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Shape;
 
 /**
  *
@@ -17,95 +21,75 @@ import javafx.scene.shape.Circle;
  */
 public class ElementManagmentState extends State {
 
-    MyThread thread = new MyThread();
+    MenuItem itemE1 = new MenuItem("Add Input");
+    MenuItem itemE2 = new MenuItem("Remove Input");
+    MenuItem itemE3 = new MenuItem("Delete");
+
+    ContextMenu contextMenuElement = new ContextMenu(itemE1, itemE2, itemE3);
+
+    ContextMenu contextMenuVariable = new ContextMenu();
+
+    MenuItem itemV1 = new MenuItem("Input mode");
+    MenuItem itemV2 = new MenuItem("Output mode");
 
     @Override
-    public void clickEvent(Pane target) {
+    public void clickProcessing(MouseEvent event) {
+        if (event.getTarget().getClass() == Element.class) {
+            Element elem = (Element) event.getTarget();
+            itemE2.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent e) {
+                    elem.deleteInput();
+                }
+            });
 
+            Point2D point = elem.localToScreen(event.getSceneX(), event.getSceneY());
+            Point2D scre = elem.screenToLocal(point.getX(), point.getY());
+            double f = point.getX() - scre.getX();
+            double s = point.getY() - scre.getY();
+            contextMenuElement.show(elem, f, s);
+
+        }
     }
 
     @Override
-    public void pressEvent(Pane target) {
-        target.addEventHandler(MouseEvent.MOUSE_PRESSED, (MouseEvent event) -> {
-            for (Element element : elements) {
-                for (int i = 0; i < element.getChildren().size(); i++) {
-                    if (event.getTarget() == element.getChildren().get(i)) {
-                        element.setDragging(true);
-                        element.setMouseX(event.getSceneX());
-                        element.setMouseY(event.getSceneY());
-                        element.setCorX(element.getTranslateX());
-                        element.setCorY(element.getTranslateY());
-                        Bounds bound = element.getConnectionInputCircle().get(1).localToScene(element.getConnectionInputCircle().get(1).getBoundsInLocal());
-                        System.out.println(bound);
-                        Circle circle1 = new Circle(6.25);
-                        Circle circle2 = new Circle(10);
-                        target.getChildren().add(circle1);
-                        target.getChildren().add(circle2);
-                        circle1.relocate(bound.getMinX() - 50 - 6.25, bound.getMinY() - 0.25);
-                        System.out.println("W " + element.getConnectionInputCircle().get(1).getCenterX());
-                        //circle2.relocate(bound.getMinY(), bound.getMinY());
-                        int gridx = (int) element.getConnectionInputCircle().get(1).getTranslateX() / 12;
-                        int gridy = (int) element.getConnectionInputCircle().get(1).getTranslateY() / 12;
-                        //element.getConnectionInputCircle().get(1).setTranslateX((12.5 * gridx));
-                        //element.getConnectionInputCircle().get(1).setTranslateY((12.5 * gridy));
-                        element.toFront();
-                        circle1.toFront();
-                        return;
-                    }
-                }
-            }
-        });
+    public void pressProcessing(MouseEvent event) {
+        if (event.getTarget() instanceof Movable) {
+            Shape shape = (Shape) event.getTarget();
+            Movable mov = (Movable) event.getTarget();
+            mov.setMouseX(event.getSceneX());
+            mov.setMouseY(event.getSceneY());
+            mov.setCorX(shape.getLayoutX());
+            mov.setCorY(shape.getLayoutY());
+            mov.setToFront();
+        }
     }
 
     @Override
-    public void dragEvent(Node target, ScrollPane scroll) {
-        //thread.run();
-        target.addEventHandler(MouseEvent.MOUSE_DRAGGED, (MouseEvent event) -> {
-            for (Element element : elements) {
-                if (element.isDragging() == true) {
-                    element.setTranslateX(event.getSceneX() - (element.getMouseX() - element.getCorX()));
-                    element.setTranslateY(event.getSceneY() - (element.getMouseY() - element.getCorY()));
-                    int gridx = (int) element.getTranslateX() / 12;
-                    int gridy = (int) element.getTranslateY() / 12;
-                    element.setTranslateX((12.5 * gridx));
-                    element.setTranslateY((12.5 * gridy));
-                    break;
-                }
-            }
+    public void dragProcessing(MouseEvent event) {
+        if (event.getTarget() instanceof Movable) {
+            Shape shape = (Shape) event.getTarget();
+            Movable mov = (Movable) event.getTarget();
 
-        });
+            shape.setLayoutX(event.getSceneX() - (mov.getMouseX() - mov.getCorX()));
+            shape.setLayoutY(event.getSceneY() - (mov.getMouseY() - mov.getCorY()));
+            int gridx = (int) shape.getLayoutX() / 10;
+            int gridy = (int) shape.getLayoutY() / 10;
+
+            shape.setLayoutX((10 * gridx));
+            shape.setLayoutY((10 * gridy));
+            mov.getSymbol().toFront();
+
+        }
     }
 
     @Override
-    public void releaseEvent(Node target) {
-        EventHandler eventhandler = new EventHandler() {
-            @Override
-            public void handle(Event event) {
-                for (Element element : elements) {
-                    if (element.isDragging() == true) {
-                        element.setDragging(false);
-                        //System.out.println("REALESED");
-                        Bounds bound = element.localToScene(element.getBoundsInLocal());
-//                        Bounds bounds = element.localToScene(element.getChildren().get(0).getBoundsInLocal());
-//                        System.out.println(bound);
-//                        System.out.println(element.getLayoutX());
-//                        System.out.println(element.getLayoutY());
-//                        element.getInputsInElement().get(0).getTranslateX();
-//                        System.out.println("CIRX " + element.getInputsInElement().get(0).getTranslateX());
-//                        System.out.println("CIRY " + element.getInputsInElement().get(0).getTranslateY());
-//                        System.out.println("XTR " + element.getTranslateX());
-//                        System.out.println("XTY " + element.getTranslateY());
-//                        System.out.println("CIRX " + element.getInputsInElement().get(0).localToParentTransformProperty().getValue().getTx());
-//                        System.out.println("CIRY " + element.getInputsInElement().get(0).localToParentTransformProperty().getValue().getTy());
-//                        System.out.println(element.localToParentTransformProperty().getValue().getTx());
-//                        System.out.println(element.localToParentTransformProperty().getValue().getTy());
-                        target.removeEventFilter(MouseEvent.MOUSE_RELEASED, this);
-                        break;
-                    }
-                }
-            }
-        };
-        target.addEventFilter(MouseEvent.MOUSE_RELEASED, eventhandler);
+    public void releaseProcessing(MouseEvent event) {
+        if (event.getTarget() instanceof ObservableInterface & event.getTarget() instanceof Movable) {
+            ObservableInterface observable = (ObservableInterface) event.getTarget();
+            observable.notifyObservers();
+        }
+        System.out.println("RELEASED 1");
     }
 
     @Override
@@ -127,4 +111,8 @@ public class ElementManagmentState extends State {
 //          System.out.println(this.myParam);
 //      }
 //    });
+    @Override
+    public void changeState(State change, State state) {
+        change = state;
+    }
 }
