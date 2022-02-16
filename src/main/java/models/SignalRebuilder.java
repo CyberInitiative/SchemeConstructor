@@ -101,7 +101,7 @@ public class SignalRebuilder {
                 i = 0;
             }
             decodingList.removeIf(x -> x.equals("#"));
-            System.out.println("DEC LIST: " + decodingList);
+            //System.out.println("DEC LIST: " + decodingList);
         }
 
         removeUnnecessaryVars();
@@ -121,16 +121,16 @@ public class SignalRebuilder {
                 }
             }
         }
-        for (int f = 1; f < rebuildedSignals.size(); f++) {
-            String temp;
-            for (int s = 0; s < rebuildedSignals.size(); s++) {
-                if (rebuildedSignals.get(f).getVariable().contains(rebuildedSignals.get(s).getVariable())) {
-                    temp = rebuildedSignals.get(f).getVariable().replace(rebuildedSignals.get(s).getVariable(), "");
-                    if (temp.equals(")(")) {
-                        rebuildedSignals.get(s).setVariable("#");
-                    }
-                }
-            }
-        }
+//        for (int f = 1; f < rebuildedSignals.size(); f++) {
+//            String temp;
+//            for (int s = 0; s < rebuildedSignals.size(); s++) {
+//                if (rebuildedSignals.get(f).getVariable().contains(rebuildedSignals.get(s).getVariable())) {
+//                    temp = rebuildedSignals.get(f).getVariable().replace(rebuildedSignals.get(s).getVariable(), "");
+//                    if (temp.equals(")(")) {
+//                        rebuildedSignals.get(s).setVariable("#");
+//                    }
+//                }
+//            }
+//        }
     }
 }

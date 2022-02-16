@@ -1,6 +1,5 @@
 package models;
 
-import java.util.ArrayList;
 import java.util.List;
 import javafx.beans.property.DoubleProperty;
 import javafx.scene.paint.Color;
@@ -11,8 +10,9 @@ import javafx.scene.shape.Line;
  *
  * @author Miroslav Levdikov
  */
-public class ConnectionAnchor extends Circle implements ObservableInterface {
+public class ConnectionAnchor extends Circle implements ObservableInterface, ConnectionComponent {
 
+    //private String name;
     private Boolean status = null;
 
     private boolean isConnected = false;
@@ -24,12 +24,14 @@ public class ConnectionAnchor extends Circle implements ObservableInterface {
     private double mouseX = 0;
     private double mouseY = 0;
 
-    private Line connectionLine;
+    private Connector mediator;
+
+    //private Line connectionLine;
     private ConnectionAnchor secondEnd;
     private Movable socketsElementOwner;
+    private Socket connectedSocket;
 
-    private int identificator = this.hashCode();
-
+    //private int identificator = this.hashCode();
     private List<ObserverInterface> socketObservers;
 
     ConnectionAnchor(DoubleProperty x, DoubleProperty y, List<ObserverInterface> socketObservers) {
@@ -41,33 +43,80 @@ public class ConnectionAnchor extends Circle implements ObservableInterface {
 
         setFill(Color.rgb(138, 149, 151));
         setStroke(Color.BLACK);
+        //listener();
+    }
+
+    ConnectionAnchor(List<ObserverInterface> socketObservers) {
+        super(5);
+        this.socketObservers = socketObservers;
+        setFill(Color.rgb(138, 149, 151));
+        setStroke(Color.BLACK);
+    }
+
+    public void bind(DoubleProperty x, DoubleProperty y) {
+        x.bind(centerXProperty());
+        y.bind(centerYProperty());
+    }
+
+    public ConnectionAnchor requestSecondAnchor(ConnectionAnchor anchor) {
+        return mediator.getOppositeAnchor(anchor);
+    }
+
+    public ElementConnector requestConnectionLine(){
+        return mediator.getConnectionLine();
+    }
+//    private void listener(){
+//        centerXProperty().addListener((obj, oldValue, newValue) -> {
+//            System.out.println("V" + newValue);
+//        });
+//        centerYProperty().addListener((obj, oldValue, newValue) -> {
+//            System.out.println("V" + newValue);
+//        });        
+//    }
+    public Socket getConnectedSocket() {
+        return connectedSocket;
+    }
+
+    public void setConnectedSocket(Socket connectedSocket) {
+        this.connectedSocket = connectedSocket;
     }
 
     @Override
-    public void registerObserver(ObserverInterface observer) {
+    public void registerObserver(ObserverInterface observer) { //Observer interface
         socketObservers.add(observer);
     }
 
     @Override
-    public void removeObserver(ObserverInterface observer) {
+    public void removeObserver(ObserverInterface observer) { //Observer interface
         socketObservers.remove(observer);
     }
 
     @Override
-    public void notifyObservers() {
+    public void notifyObservers() { //Observer interface
         for (ObserverInterface observer : socketObservers) {
             observer.update(this);
         }
     }
 
-    public int getIdentificator() {
-        return identificator;
+    @Override
+    public void setMediator(Connector mediator) { //Component interface
+        this.mediator = mediator;
     }
 
-    public void setIdentificator(int identificator) {
-        this.identificator = identificator;
-    }
-
+//    @Override
+//    public String getName() {
+//        return name;
+//    }
+//    public void setName(String name) {
+//        this.name = name;
+//    }
+//    public int getIdentificator() {
+//        return identificator;
+//    }
+//
+//    public void setIdentificator(int identificator) {
+//        this.identificator = identificator;
+//    }
     public double getCorX() {
         return corX;
     }
@@ -116,13 +165,17 @@ public class ConnectionAnchor extends Circle implements ObservableInterface {
         this.isDragging = isDragging;
     }
 
-    public Line getConnectionLine() {
-        return connectionLine;
+    public Connector getMediator() {
+        return mediator;
     }
+    
+//    public Line getConnectionLine() {
+//        return connectionLine;
+//    }
 
-    public void setConnectionLine(Line connectionLine) {
-        this.connectionLine = connectionLine;
-    }
+//    public void setConnectionLine(Line connectionLine) {
+//        this.connectionLine = connectionLine;
+//    }
 
     public boolean isIsConnected() {
         return isConnected;

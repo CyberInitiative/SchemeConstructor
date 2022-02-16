@@ -26,6 +26,7 @@ import models.Connector;
 import models.ConnectorsManagmentState;
 import models.ElementManagmentState;
 import models.Element;
+import models.Facade;
 import models.Grid;
 import models.ObserverInterface;
 import models.PathPoint;
@@ -72,6 +73,7 @@ public class PrimaryPresenter {
     private final ConnectorsManagmentState connState = new ConnectorsManagmentState();
     private final ElementManagmentState elemState = new ElementManagmentState();
     private State currentState = elemState;
+    private Facade facade = new Facade();
 
     @FXML
     Button addElement;
@@ -98,6 +100,7 @@ public class PrimaryPresenter {
     };
 
     public void initialize() {
+        facade.buildTheScheme(workingSpace);
         pointManager.generatePoints(workingSpace.getPrefWidth(), workingSpace.getPrefHeight(), 10, 10);
         //pointManager.setOpenedList(pointManager.getAllPathPoints());        
         Image img = new Image("plusEl.png");
@@ -141,6 +144,7 @@ public class PrimaryPresenter {
 //                        contollPane.getChildren().remove(remitem);
                     }
                     for (Element additem : c.getAddedSubList()) {
+                        //System.out.println(elements.size());
                         workingSpace.getChildren().add(additem);
 //                        workingSpace.getChildren().add(additem.getBody());
                         workingSpace.getChildren().add(additem.getOutputLine());
@@ -170,12 +174,14 @@ public class PrimaryPresenter {
                                         workingSpace.getChildren().remove(remitem);
                                     }
                                     for (Socket additem : c.getAddedSubList()) {
-                                        workingSpace.getChildren().add(additem);
+                                        if (additem.getSignal() != null) {
+                                            workingSpace.getChildren().add(additem);
+                                        }
                                     }
                                 }
                             }
-
                         });
+                        additem.notifyObservers();
                     }
                 }
             }
@@ -190,9 +196,17 @@ public class PrimaryPresenter {
                     }
                     for (VariableBlock additem : c.getAddedSubList()) {
                         workingSpace.getChildren().add(additem);
-                        workingSpace.getChildren().add(additem.getSymbol());
-                        workingSpace.getChildren().add(additem.getInputLine());
-                        workingSpace.getChildren().add(additem.getConnectionInputSocket());
+                        if (additem.getSymbol() != null) {
+                            workingSpace.getChildren().add(additem.getSymbol());
+                        }
+                        if (additem.getInputLine() != null && additem.getConnectionInputSocket() != null) {
+                            workingSpace.getChildren().add(additem.getInputLine());
+                            workingSpace.getChildren().add(additem.getConnectionInputSocket());
+                        }
+                        if (additem.getOutputLine() != null && additem.getConnectionOutputSocket() != null) {
+                            workingSpace.getChildren().add(additem.getOutputLine());
+                            workingSpace.getChildren().add(additem.getConnectionOutputSocket());
+                        }
                     }
                 }
             }
@@ -219,6 +233,9 @@ public class PrimaryPresenter {
         pressEvent();
         dragEvent();
         releaseEvent();
+        elements.addAll(facade.getArr());
+        blocks.addAll(facade.getGenerator().getBlocks());
+        System.out.println("1ARRAY: " + facade.getArr());
     }
 
     private void setPositionForNewElement(Element element) {
@@ -296,7 +313,7 @@ public class PrimaryPresenter {
     @FXML
     private void addNewElement() {
         Element element = new Element(pointManager.getAllPoints());
-        element.setOwnerForSocket();
+        element.setOwnerForAllSockets();
         elements.add(element);
     }
 

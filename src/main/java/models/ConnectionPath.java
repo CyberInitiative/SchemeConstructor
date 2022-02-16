@@ -25,77 +25,73 @@ import models.PathPoint.RelativeDirectionStatus;
  *
  * @author Miroslav Levdikov
  */
-public class ConnectionPath {
+public class ConnectionPath implements ObserverInterface, ConnectionComponent {
 
     Comparator<PathPoint> comparator = (o1, o2) -> ((Integer) o1.getF()).compareTo((Integer) o2.getF());
+
+    private Connector mediator;
 
     private final int DEF_MOV_COST = 10;
     private int numberOfPoints = 0;
 
     private PathPoint startPathPoint;
     private PathPoint endPathPoint;
+
     private Polyline pathPolyline = new Polyline();
+
+    private List<PathPoint> pathPointsList = new ArrayList<>();
+
+    private Pane pane;
 
     List<PathPoint> openList = new ArrayList<>();
     List<PathPoint> closedList = new ArrayList<>();
 
-    List<PathPoint> currentNeighbours = new ArrayList<>();
-
-    List<PathPoint> forks = new ArrayList<>();
-    //List<ArrayList<PathPoint>> lists = new ArrayList<>();
-    //HashMap<PathPoint, PathPoint> frk = new HashMap<>();
-
     public ConnectionPath(ConnectionAnchor startAnchor, ConnectionAnchor endAnchor, Pane pane) {
-        //System.out.println("StartAnch: " + startAnchor);
-        //System.out.println("EndAnch: " + endAnchor);
+        for (int i = 0; i < pointManager.getAllPoints().length; i++) {
+            for (int j = 0; j < pointManager.getAllPoints()[0].length; j++) {
+                if (startAnchor.getBoundsInParent().contains(pointManager.getAllPoints()[i][j])) {
+                    if (startAnchor.getStatus() == true) {
+                        startPathPoint = pointManager.getAllPoints()[i][j];
+                    } else if (startAnchor.getStatus() == false) {
+                        endPathPoint = pointManager.getAllPoints()[i][j];
+                    }
+                } else if (endAnchor.getBoundsInParent().contains(pointManager.getAllPoints()[i][j])) {
+                    if (endAnchor.getStatus() == false) {
+                        endPathPoint = pointManager.getAllPoints()[i][j];
+                    } else if (endAnchor.getStatus() == true) {
+                        startPathPoint = pointManager.getAllPoints()[i][j];
+                    }
+                }
+            }
+        }
+        //System.out.println("@ START POINT: " + startPathPoint);
+        //System.out.println("@ END POINT: " + endPathPoint);
+        if (startPathPoint == null || endPathPoint == null) {
+            return;
+        }
+        //System.out.println("START POINT: " + startPathPoint);
+        //System.out.println("END POINT: " + endPathPoint);
+        //defineMovementPriority();
+        generatePath(startPathPoint, pane);
+        generatePolylinePath(pane);
+    }
+
+    public ConnectionPath(ConnectionAnchor startAnchor, PathPoint endPathPoint, Pane pane) {
         for (int i = 0; i < pointManager.getAllPoints().length; i++) {
             for (int j = 0; j < pointManager.getAllPoints()[0].length; j++) {
                 if (startAnchor.getBoundsInParent().contains(pointManager.getAllPoints()[i][j])) {
                     startPathPoint = pointManager.getAllPoints()[i][j];
-                    System.out.println("Start: " + startPathPoint);
-                } else if (endAnchor.getBoundsInParent().contains(pointManager.getAllPoints()[i][j])) {
-                    endPathPoint = pointManager.getAllPoints()[i][j];
-                    System.out.println("ENDL: " + endPathPoint);
                 }
             }
         }
-        defineMovementPriority();
-        generatePath(startPathPoint);
-        generatePolulinePath(pane, startPathPoint, endPathPoint);
-//        for (PathPoint p : forks) {
-//            ConnectionPath cp = new ConnectionPath(p.getX(), p.getY(), endPathPoint.getX(), endPathPoint.getY(), pane);
-//        }
-    }
-
-    public ConnectionPath(double fX, double fY, double sX, double sY, Pane pane) {
-        //System.out.println("StartAnch: " + startAnchor);
-        //System.out.println("EndAnch: " + endAnchor);
-        for (int i = 0; i < pointManager.getAllPoints().length; i++) {
-            for (int j = 0; j < pointManager.getAllPoints()[0].length; j++) {
-                if (fX == pointManager.getAllPoints()[i][j].getX() && fY == pointManager.getAllPoints()[i][j].getY()) {
-                    startPathPoint = pointManager.getAllPoints()[i][j];
-                    System.out.println("Start: " + startPathPoint);
-                } else if (sX == pointManager.getAllPoints()[i][j].getX() && sY == pointManager.getAllPoints()[i][j].getY()) {
-                    endPathPoint = pointManager.getAllPoints()[i][j];
-                    System.out.println("ENDL: " + endPathPoint);
-                }
-            }
-        }
-        defineMovementPriority();
-        generatePath(startPathPoint);
-        generatePolulinePath(pane, startPathPoint, endPathPoint);
-    }
-
-    Pane pane = new Pane();
-
-    public ConnectionPath(PathPoint startPathPoint, PathPoint endPathPoint, Pane pane) {
-        this.pane = pane;
-        this.startPathPoint = startPathPoint;
         this.endPathPoint = endPathPoint;
-
-        generatePath2(startPathPoint);
-
-        generatePolulinePath(pane, startPathPoint, endPathPoint);
+        //System.out.println("№ START POINT: " + startPathPoint);
+        //System.out.println("№ END POINT: " + endPathPoint);
+        //defineMovementPriority();
+        generatePath(startPathPoint, pane);
+        generatePolylinePath(pane);
+        Circle circle = new Circle(endPathPoint.getX(),endPathPoint.getY(), 3);
+        pane.getChildren().add(circle);
     }
 
     private void defineMovementPriority() {
@@ -144,105 +140,44 @@ public class ConnectionPath {
             RelativeDirectionStatus.Right.setPriority(3);
             System.out.println("Нижний левый");
         }
-
-//        System.out.println("PRIOR L " +  RelativeDirectionStatus.Left.getPriority());
-//        System.out.println("PRIOR R " +  RelativeDirectionStatus.Right.getPriority());
-//        System.out.println("PRIOR D " +  RelativeDirectionStatus.Down.getPriority());
-//        System.out.println("PRIOR U " +  RelativeDirectionStatus.Up.getPriority());
     }
 
-    private void generateAltarnative() {
-
-    }
-
-    private void generatePath(PathPoint startPathPoint) {
-        PathPoint currentPathPoint = startPathPoint; //Первая текущая точка - это стартовая точка пути;
-        openList.add(currentPathPoint);
+    private void generatePath(PathPoint startPathPoint, Pane pane) {
+        PathPoint currentPathPoint = startPathPoint; //Первая текущая точка - это стартовая точка пути; 
+        openList.add(startPathPoint); //Добавляем стартовую точку в открытый список;
         while (currentPathPoint != endPathPoint) {
-            Circle circle = new Circle(currentPathPoint.getX(), currentPathPoint.getY(), 5);
-            pane.getChildren().add(circle);
-            getAdjacentPoints(currentPathPoint); //Поиск соседних по отношению к текущей допустимых точек;      
-            Collections.sort(currentNeighbours, comparator);
+            //defineMovementPriority();
+            currentPathPoint = findMinimalF();
+            //Circle circle = new Circle(currentPathPoint.getX(), currentPathPoint.getY(), 3); // Для демонстрации области поиска;
+            //pane.getChildren().add(circle);
             openList.remove(currentPathPoint);
             closedList.add(currentPathPoint);
-            currentPathPoint = getApplicants(currentPathPoint);
-            currentNeighbours.clear();
+            getAdjacentPoints(currentPathPoint); //Поиск соседних допустимых точек;
+            if (openList.isEmpty()) {
+                System.out.println("THERE IS NO WAY");
+                //TODO Реализовать удаление соединителя;
+                break;
+            }
         }
     }
 
-    private void generatePath2(PathPoint startPathPoint) {
-        List<PathPoint> alterOpenList = new ArrayList<>();
-        List<PathPoint> alterClosedList = new ArrayList<>();
-        PathPoint currentPathPoint = startPathPoint; //Первая текущая точка - это стартовая точка пути;
-        alterOpenList.add(currentPathPoint);
-        while (currentPathPoint != endPathPoint) {
-            getAdjacentPoints(currentPathPoint, alterOpenList, alterClosedList); //поиск соседних допустимых точек            
-            Collections.sort(currentNeighbours, comparator);
-            alterOpenList.remove(currentPathPoint);
-            alterClosedList.add(currentPathPoint);
-            currentPathPoint = getApplicants2();
-            currentNeighbours.clear();
-        }
-    }
-
-//    private void generatePathE(PathPoint startPathPoint) {
-//        PathPoint currentPathPoint = startPathPoint; //Первая текущая точка - это стартовая точка пути;
-//        int i = 0;
-//        while (currentPathPoint != endPathPoint) {
-//            i++;
-//            getAdjacentPoints(currentPathPoint); //поиск соседних допустимых точек            
-//            Collections.sort(currentNodes, comparator);
-//            openList.remove(currentPathPoint);
-//            closedList.add(currentPathPoint);
-//            currentPathPoint = getApplicants();
-//            //currentPathPoint = currentNodes.get(0);
-//            partOfPath.add(currentPathPoint);
-//            currentNodes.clear();
-//            System.out.println("I: " + i + " ; current p: " + currentPathPoint);
-//        }
-//    }
-    private PathPoint getApplicants(PathPoint currentPoint) {
-        List<PathPoint> applicants = new ArrayList<>();
-        applicants.add(currentNeighbours.get(0));
-        if (currentNeighbours.size() > 1) {
-            for (int i = 1; i < currentNeighbours.size(); i++) {
-                if (currentNeighbours.get(i).getF() == currentNeighbours.get(0).getF()) {
-                    applicants.add(currentNeighbours.get(i));
+    private PathPoint findMinimalF() {
+        List<PathPoint> applicants = new ArrayList<>(); //Массив претендентов на становление текущим узлом;
+        Collections.sort(openList, comparator);
+        applicants.add(openList.get(0)); //Узел с минимальным значением F;
+        if (openList.size() > 1) {
+            for (int i = 1; i < openList.size(); i++) {
+                if (openList.get(0).getF() == openList.get(i).getF()) {
+                    applicants.add(openList.get(i));
                 }
             }
         }
-        if (applicants.size() > 2) {
-            applicants.remove(currentNeighbours.get(0));
-            for (PathPoint point : applicants) {
-                point.setF(0);
-                point.setG(0);
-                point.setH(0);
-                if (forks.size() != 2) {
-                    System.out.println("FRK SIZE: " + forks.size());
-                    forks.add(point);
-                }
-                //ConnectionPath alt = new ConnectionPath(point.getX(), point.getY(), endPathPoint.getX(), endPathPoint.getY(), pane);
-            }
-
-        } else {
-            PathPoint min = Collections.min(applicants, Comparator.comparing(s -> s.getRelativeDir().getPriority()));
-            return min;
-        }
-        return currentNeighbours.get(0);
-    }
-
-    private PathPoint getApplicants2() {
-        List<PathPoint> apllicants = new ArrayList<>();
-        apllicants.add(currentNeighbours.get(0));
-        if (currentNeighbours.size() > 1) {
-            for (int i = 1; i < currentNeighbours.size(); i++) {
-                if (currentNeighbours.get(i).getF() == currentNeighbours.get(0).getF()) {
-                    apllicants.add(currentNeighbours.get(i));
-                }
-            }
-
-        }
-        PathPoint min = Collections.min(apllicants, Comparator.comparing(s -> s.getRelativeDir().getPriority()));
+        PathPoint min = Collections.min(applicants, Comparator.comparing((PathPoint s) -> s.getH()).thenComparing(s -> s.getRelativeDir().getPriority()));
+        /*
+        Если узлов с минимальным значением F несколько, отбирается тот узел, который имеет более приоритетное направление;
+         */
+        //System.out.println("MIN: " + min);
+        //return openList.get(0);
         return min;
     }
 
@@ -250,50 +185,31 @@ public class ConnectionPath {
         int currCol = currentPoint.getCol();
         int currRow = currentPoint.getRow();
 
-        int downR = currRow + 1;
-        int upR = currRow - 1;
-        int leftC = currCol - 1;
-        int rightC = currCol + 1;
+        int downR = currRow + 1; //Ряд ниже;
+        int upR = currRow - 1;  //Ряд выше;
+        int leftC = currCol - 1; //Ряд слева;
+        int rightC = currCol + 1; //Ряд справа;
 
-        checkThisPoint(currentPoint, pointManager.getAllPoints()[leftC][currRow]);//Левый сосед
-        pointManager.getAllPoints()[currCol - 1][currRow].setRelativeDir(RelativeDirectionStatus.Left);
-        checkThisPoint(currentPoint, pointManager.getAllPoints()[rightC][currRow]);//Правый сосед
-        pointManager.getAllPoints()[currCol + 1][currRow].setRelativeDir(RelativeDirectionStatus.Right);
-        checkThisPoint(currentPoint, pointManager.getAllPoints()[currCol][downR]);//Нижний сосед
-        pointManager.getAllPoints()[currCol][currRow + 1].setRelativeDir(RelativeDirectionStatus.Down);
-        checkThisPoint(currentPoint, pointManager.getAllPoints()[currCol][upR]);//Верхний сосед
-        pointManager.getAllPoints()[currCol][currRow - 1].setRelativeDir(RelativeDirectionStatus.Up);
-
-        System.out.println("L: " + pointManager.getAllPoints()[leftC][currRow]);
-        System.out.println("R: " + pointManager.getAllPoints()[rightC][currRow]);
-        System.out.println("D: " + pointManager.getAllPoints()[currCol][downR]);
-        System.out.println("U: " + pointManager.getAllPoints()[currCol][upR]);
-        System.out.println("@@@@@");
-    }
-
-    private void getAdjacentPoints(PathPoint currentPoint, List<PathPoint> openList, List<PathPoint> closedList) {
-        int currCol = currentPoint.getCol();
-        int currRow = currentPoint.getRow();
-
-        int downR = currRow + 1;
-        int upR = currRow - 1;
-        int leftC = currCol - 1;
-        int rightC = currCol + 1;
-
-        checkThisPoint(currentPoint, pointManager.getAllPoints()[leftC][currRow], openList, closedList);//Левый сосед
-        pointManager.getAllPoints()[currCol - 1][currRow].setRelativeDir(RelativeDirectionStatus.Left);
-        checkThisPoint(currentPoint, pointManager.getAllPoints()[rightC][currRow], openList, closedList);//Правый сосед
-        pointManager.getAllPoints()[currCol + 1][currRow].setRelativeDir(RelativeDirectionStatus.Right);
-        checkThisPoint(currentPoint, pointManager.getAllPoints()[currCol][downR], openList, closedList);//Нижний сосед
-        pointManager.getAllPoints()[currCol][currRow + 1].setRelativeDir(RelativeDirectionStatus.Down);
-        checkThisPoint(currentPoint, pointManager.getAllPoints()[currCol][upR], openList, closedList);//Верхний сосед
-        pointManager.getAllPoints()[currCol][currRow - 1].setRelativeDir(RelativeDirectionStatus.Up);
-
-        System.out.println("ALT L: " + pointManager.getAllPoints()[leftC][currRow]);
-        System.out.println("ALT R: " + pointManager.getAllPoints()[rightC][currRow]);
-        System.out.println("ALT D: " + pointManager.getAllPoints()[currCol][downR]);
-        System.out.println("ALT U: " + pointManager.getAllPoints()[currCol][upR]);
-        System.out.println("@@@@@");
+        if (leftC >= 0) {
+            checkThisPoint(currentPoint, pointManager.getAllPoints()[leftC][currRow]);//Проверка левого соседа;
+            pointManager.getAllPoints()[leftC][currRow].setRelativeDir(RelativeDirectionStatus.Left);
+            pointManager.getAllPoints()[leftC][currRow].setPriority();
+        }
+        if (rightC < pointManager.getAllPoints()[0].length) {
+            checkThisPoint(currentPoint, pointManager.getAllPoints()[rightC][currRow]);//Проверка правого соседа;
+            pointManager.getAllPoints()[rightC][currRow].setRelativeDir(RelativeDirectionStatus.Right);
+            pointManager.getAllPoints()[rightC][currRow].setPriority();
+        }
+        if (downR < pointManager.getAllPoints().length) {
+            checkThisPoint(currentPoint, pointManager.getAllPoints()[currCol][downR]);//Проверка нижнего соседа;
+            pointManager.getAllPoints()[currCol][downR].setRelativeDir(RelativeDirectionStatus.Down);
+            pointManager.getAllPoints()[currCol][downR].setPriority();
+        }
+        if (upR >= 0) {
+            checkThisPoint(currentPoint, pointManager.getAllPoints()[currCol][upR]);//Проверка верхнего соседа;
+            pointManager.getAllPoints()[currCol][upR].setRelativeDir(RelativeDirectionStatus.Up);
+            pointManager.getAllPoints()[currCol][upR].setPriority();
+        }
     }
 
     private void checkThisPoint(PathPoint activePoint, PathPoint checkingPoint) {
@@ -305,13 +221,12 @@ public class ConnectionPath {
                     checkingPoint.calculateHeuristic(endPathPoint);
                     checkingPoint.setG(DEF_MOV_COST + checkingPoint.getPreviousPoint().getG());
                     checkingPoint.calculateF();
-                    currentNeighbours.add(checkingPoint);
                 } else {
+                    //Пересчет значения F;
                     if ((activePoint.getG() + DEF_MOV_COST) < checkingPoint.getG()) {
                         checkingPoint.setG(activePoint.getG() + DEF_MOV_COST);
                         checkingPoint.calculateF();
                         checkingPoint.setPreviousPoint(activePoint);
-                        currentNeighbours.add(checkingPoint);
                     }
                 }
             } else {
@@ -321,46 +236,51 @@ public class ConnectionPath {
 
     }
 
-    private void checkThisPoint(PathPoint activePoint, PathPoint checkingPoint, List<PathPoint> openList, List<PathPoint> closedList) {
-        if (!closedList.contains(checkingPoint)) {
-            if (checkingPoint.getStatus() != PathPointStatus.Obstructuion) {
-                if (!openList.contains(checkingPoint)) {
-                    openList.add(checkingPoint);
-                    checkingPoint.setPreviousPoint(activePoint);
-                    checkingPoint.calculateHeuristic(endPathPoint);
-                    checkingPoint.setG(DEF_MOV_COST + checkingPoint.getPreviousPoint().getG());
-                    checkingPoint.calculateF();
-                    currentNeighbours.add(checkingPoint);
-                } else {
-                    if ((activePoint.getG() + DEF_MOV_COST) < checkingPoint.getG()) {
-                        checkingPoint.setG(activePoint.getG() + DEF_MOV_COST);
-                        checkingPoint.calculateF();
-                        checkingPoint.setPreviousPoint(activePoint);
-                        currentNeighbours.add(checkingPoint);
-                    }
-                }
-            } else {
-                closedList.add(checkingPoint);
-            }
-        }
-
-    }
-
-    private void generatePolulinePath(Pane pane, PathPoint startPathPoint, PathPoint endPathPoint) {
-        pathPolyline.setStrokeWidth(2);
+    private void generatePolylinePath(Pane pane) {
+        pathPolyline.setStrokeWidth(2.5);
         pathPolyline.setStroke(Color.BLACK);
 
         PathPoint currentPoint = endPathPoint;
         while (currentPoint != startPathPoint) {
             pathPolyline.getPoints().add(currentPoint.getX());
             pathPolyline.getPoints().add(currentPoint.getY());
+            pathPointsList.add(currentPoint);
             currentPoint = currentPoint.getPreviousPoint();
         }
         pathPolyline.getPoints().add(startPathPoint.getX());
         pathPolyline.getPoints().add(startPathPoint.getY());
+        pathPointsList.add(startPathPoint);
 
         pane.getChildren().add(pathPolyline);
         pathPolyline.toBack();
+        System.out.println("POL COR: " + pathPolyline.getPoints());
+    }
+
+    public PathPoint getClosestPoint(double x, double y) {
+        //System.out.println("X: " + x);
+        //System.out.println("Y: " + y);
+        double prevDistance = 100000;
+        PathPoint returnedPoint = null;
+        for (PathPoint pPoint : pathPointsList) {
+            double distance = Math.sqrt(Math.pow(pPoint.getX() - x, 2) + Math.pow(pPoint.getY() - y, 2));
+            //System.out.println("DIST: " + distance);
+            if (distance < prevDistance) {
+                prevDistance = distance;
+                returnedPoint = pPoint;
+            }
+        }
+        //System.out.println("RETUrNED POINT: " + returnedPoint);
+        return returnedPoint;
+    }
+
+    @Override
+    public void setMediator(Connector mediator) {
+        this.mediator = mediator;
+    }
+
+    @Override
+    public void update(ObservableInterface observable) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     public PathPoint getStartPathPoint() {
@@ -391,27 +311,4 @@ public class ConnectionPath {
         this.pane = pane;
     }
 
-//    private PathPoint getApplicants() {
-//        List<PathPoint> apllicants = new ArrayList<>();
-//        apllicants.add(currentNeighbours.get(0));
-//        if (currentNeighbours.size() > 1) {
-//            for (int i = 1; i < currentNeighbours.size(); i++) {
-//                if (currentNeighbours.get(i).getF() == currentNeighbours.get(0).getF()) {
-//                    apllicants.add(currentNeighbours.get(i));
-//                    System.out.println("AP1: " + apllicants);
-//                }
-//            }
-////            if (apllicants.size() > 1) {
-////                for (int j = 1; j < apllicants.size(); j++) {
-////                    PathPoint copy = apllicants.get(j);
-////                    copy.setF(0);
-////                    copy.setH(0);
-////                    copy.setG(0);
-////
-////                }
-////            }
-//        }
-//        PathPoint min = Collections.min(apllicants, Comparator.comparing(s -> s.getRelativeDir().getPriority()));
-//        return min;
-//    }
 }

@@ -1,11 +1,8 @@
 package models;
 
-import static com.gluonapplication.views.PrimaryPresenter.elements;
 import static com.gluonapplication.views.PrimaryPresenter.connectors;
-import static com.gluonapplication.views.PrimaryPresenter.pointManager;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
-import javafx.scene.shape.Circle;
 
 /**
  *
@@ -26,16 +23,17 @@ public class ConnectorsManagmentState extends State {
             ConnectionAnchor t1 = (ConnectionAnchor) (event.getTarget());
             pressManipulation(t1, event.getSceneX(), event.getSceneY());
             targetConnectionAnchor = t1;
-            targetConnectionAnchor.getConnectionLine().setVisible(true);
+            targetConnectionAnchor.requestConnectionLine().setVisible(true);
 
         }
         if (event.getTarget().getClass() == Socket.class) {
             Connector connector = new Connector((Socket) event.getTarget());
+            connector.registerComponents();
             pressManipulation(connector.getEndConnectionAnchor(), event.getSceneX(), event.getSceneY());
             connector.getStartConnectionAnchor().notifyObservers();
             connectors.add(connector);
             targetConnectionAnchor = connector.getEndConnectionAnchor();
-            targetConnectionAnchor.getConnectionLine().setVisible(true);
+            targetConnectionAnchor.requestConnectionLine().setVisible(true);
             System.out.println("PRESS 2");
         }
     }
@@ -69,12 +67,28 @@ public class ConnectorsManagmentState extends State {
     @Override
     public void releaseProcessing(MouseEvent event) {
         if (event.getTarget().getClass() == Socket.class || event.getTarget().getClass() == ConnectionAnchor.class) {
-            targetConnectionAnchor.notifyObservers();
-            System.out.println("RELEASED 2");
             Pane pane = (Pane) event.getSource();
-            ConnectionPath path = new ConnectionPath(targetConnectionAnchor, targetConnectionAnchor.getSecondEnd(), pane);
-        }
+            targetConnectionAnchor.notifyObservers();
 
+            /*
+            Необходимо узнать, соединен ли данный Socket с помощью других коннекторов, чтобы исходя из этого
+            выбрать нужный конструктор для создания маршрута. 
+             */
+            if (targetConnectionAnchor.getConnectedSocket() != null && targetConnectionAnchor.getConnectedSocket().getMainAnchor() != targetConnectionAnchor) {
+
+                var point = targetConnectionAnchor.requestSecondAnchor(targetConnectionAnchor);
+                var clP = targetConnectionAnchor.getConnectedSocket().getMainAnchor().getMediator().getConnectionPath().getClosestPoint(point.getCenterX(), point.getCenterY());
+                ConnectionPath path = new ConnectionPath(point, clP, pane);
+                targetConnectionAnchor.getMediator().registerPath(path);
+
+            } else {
+                ConnectionPath path = new ConnectionPath(targetConnectionAnchor, targetConnectionAnchor.requestSecondAnchor(targetConnectionAnchor), pane);
+                targetConnectionAnchor.getMediator().registerPath(path);
+            }
+            System.out.println("RELEASED 2");
+            targetConnectionAnchor.requestConnectionLine().setVisible(false);
+        }
+        
         targetConnectionAnchor = null;
     }
 

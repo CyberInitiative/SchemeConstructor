@@ -27,8 +27,8 @@ import models.Socket.Role;
  */
 public class Element extends Rectangle implements ObservableInterface, Movable {
 
-    private final double ELEMENT_WIDTH = 50;
-    private final double ELEMENT_HEIGHT = 80;
+    private double ELEMENT_WIDTH = 50;
+    private double ELEMENT_HEIGHT = 80;
 
     private int minimalNumberOfInputs;
     private int numberOfInputs;
@@ -49,7 +49,9 @@ public class Element extends Rectangle implements ObservableInterface, Movable {
     private double mouseY = 0;
 
     private boolean isDragging = false;
-    private boolean isSettedOnPane = false;
+    //private boolean isSettedOnPane = false;
+    private boolean included = false;
+    private boolean included2 = false;
 
     private List<Shape> listOfNodes;
 
@@ -72,6 +74,25 @@ public class Element extends Rectangle implements ObservableInterface, Movable {
         createInputSockets();
     }
 
+    /*
+    TODO:
+    Обеспечить возможность создания объектов Socket без inputline;ыА
+     */
+    public Element(ObserverInterface pointObservers[][], int numberOfInputs) {
+        super(50, 80);
+        this.pointObservers = pointObservers;
+        bindOutputLine();
+        bindSymbol();
+        setNodeVisualDetails();
+        this.minimalNumberOfInputs = 1;
+        this.numberOfInputs = numberOfInputs;
+        this.maximumNumberOfInputs = 4;
+        inputLines = FXCollections.observableArrayList();
+        connectionInputSockets = FXCollections.observableArrayList();
+        createInputLines();
+        createInputSockets();
+    }
+
     @Override
     public void setToFront() {
         for (Line line : inputLines) {
@@ -79,14 +100,14 @@ public class Element extends Rectangle implements ObservableInterface, Movable {
         }
         for (Socket socket : connectionInputSockets) {
             socket.toFront();
-            if (socket.getConnector() != null) {
-                socket.getConnector().toFront();
+            if (socket.getMainAnchor() != null) {
+                socket.getMainAnchor().toFront();
             }
         }
         outputLine.toFront();
         connectionOutputSocket.toFront();
-        if (connectionOutputSocket.getConnector() != null) {
-            connectionOutputSocket.getConnector().toFront();
+        if (connectionOutputSocket.getMainAnchor() != null) {
+            connectionOutputSocket.getMainAnchor().toFront();
         }
         this.toFront();
         symbol.toFront();
@@ -115,11 +136,21 @@ public class Element extends Rectangle implements ObservableInterface, Movable {
         }
     }
 
-    public void setOwnerForSocket() {
+    public void setOwnerForAllSockets() {
         this.getConnectionOutputSocket().setOwnerComponent(this);
         for (Socket socket : this.getConnectionInputSockets()) {
             socket.setOwnerComponent(this);
         }
+    }
+
+    public void setOwnerForInputSockets() {
+        for (Socket socket : this.getConnectionInputSockets()) {
+            socket.setOwnerComponent(this);
+        }
+    }
+
+    public void setOwnerForOutputSocket() {
+        this.getConnectionOutputSocket().setOwnerComponent(this);
     }
 
     private void bindOutputLine() {
@@ -154,7 +185,15 @@ public class Element extends Rectangle implements ObservableInterface, Movable {
         }
     }
 
-    private void createInputLines() {
+    public void createInputLines() {
+//        if (inputLines != null && !inputLines.isEmpty()) {
+//            inputLines.clear();
+//        }
+//        for (int i = inputLines.size(); i < numberOfInputs; i++) {
+//            Line line = new ElementLine();
+//            line.setStrokeWidth(2);
+//            inputLines.add(line);
+//        }
         if (inputLines.size() < numberOfInputs) {
             for (int i = inputLines.size(); i < numberOfInputs; i++) {
                 Line line = new ElementLine();
@@ -188,6 +227,13 @@ public class Element extends Rectangle implements ObservableInterface, Movable {
         }
     }
 
+    public void removeLines() {
+        while (inputLines.size() != numberOfInputs) {
+            inputLines.remove(inputLines.get(inputLines.size() - 1));
+        }
+        bindInputLines();
+    }
+
     public void deleteInput() {
         if (numberOfInputs > minimalNumberOfInputs) {
             numberOfInputs--;
@@ -200,16 +246,20 @@ public class Element extends Rectangle implements ObservableInterface, Movable {
             }
             bindInputLines();
             bindSockets();
-            System.out.println(inputLines.size());
+            //System.out.println(inputLines.size());
         }
     }
 
+//    public void setInputsByInputSockets() {
+//        createInputLines();
+//        bindSockets();
+//    }
     public void addInput() {
         if (numberOfInputs < maximumNumberOfInputs) {
             numberOfInputs++;
             Line line = new ElementLine();
             line.setStrokeWidth(2);
-            var lastIndex = inputLines.size() - 1;
+            //var lastIndex = inputLines.size() - 1;
             inputLines.add(line);
             for (Line l : inputLines) {
                 l.startXProperty().unbind();
@@ -224,7 +274,7 @@ public class Element extends Rectangle implements ObservableInterface, Movable {
         }
     }
 
-    private void bindSockets() {
+    public void bindSockets() {
         for (int i = 0; i < inputLines.size(); i++) {
             DoubleProperty startX = new SimpleDoubleProperty(inputLines.get(i).getEndX());
             DoubleProperty startY = new SimpleDoubleProperty(inputLines.get(i).getEndY());
@@ -262,6 +312,30 @@ public class Element extends Rectangle implements ObservableInterface, Movable {
         return previousValue + 20;
     }
 
+//    public void checkIsolation() {
+//        char[] currElemVariable = new char[connectionOutputSocket.getSignal().getVariable().length()];
+//        for (int j = 0; j < connectionOutputSocket.getSignal().getVariable().length(); j++) {
+//            currElemVariable[j] = connectionOutputSocket.getSignal().getVariable().charAt(j); //преобразуем выражение в array
+//        }
+//        int openBracketCount = 0, closeBracketCount = 0, incPos;
+//        for (int j = 0; j < currElemVariable.length; j++) {
+//            if (currElemVariable[j] == '(') {
+//                openBracketCount++;
+//            }
+//            if (currElemVariable[j] == ')') {
+//                closeBracketCount++;
+//                incPos = j;
+//                if (closeBracketCount == openBracketCount & incPos != currElemVariable.length - 1) {
+//                    this.isolated = false;
+//                    break;
+//                }
+//                if (closeBracketCount == openBracketCount & incPos == currElemVariable.length - 1) {
+//                    this.isolated = true;
+//                    break;
+//                }
+//            }
+//        }
+//    }
 //        configureInputPoints();
 //        for (int i = 0; i < inputsInElement.size(); i++) {
 //            Line line = new Line(inputsInElement.get(i).getLayoutX() - 12.5, inputsInElement.get(i).getLayoutY(), inputsInElement.get(i).getLayoutX(), inputsInElement.get(i).getLayoutY());
@@ -286,25 +360,24 @@ public class Element extends Rectangle implements ObservableInterface, Movable {
 //            inputsInElement.get(i).relocate(this.bodyCorX - (CIRCLE_RADIUS - 1), this.bodyCorY + (distance * (i + 1) - CIRCLE_RADIUS));
 //        }
 //    }
-    private void configureInputCircles() {
-        for (int i = 0; i < connectionInputSockets.size(); i++) {
-            connectionInputSockets.get(i).relocate(inputLines.get(i).getStartX() - Socket.getRADIUS(), inputLines.get(i).getStartY() - Socket.getRADIUS());
-        }
-    }
-
-    private void elementMovementEvents() {
-        onMousePressedProperty().set(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                mouseX = event.getSceneX();
-                mouseY = event.getSceneY();
-
-                corX = getLayoutX();
-                corY = getLayoutY();
-            }
-        });
-    }
-
+//    private void configureInputCircles() {
+//        for (int i = 0; i < connectionInputSockets.size(); i++) {
+//            connectionInputSockets.get(i).relocate(inputLines.get(i).getStartX() - Socket.getRADIUS(), inputLines.get(i).getStartY() - Socket.getRADIUS());
+//        }
+//    }
+//
+//    private void elementMovementEvents() {
+//        onMousePressedProperty().set(new EventHandler<MouseEvent>() {
+//            @Override
+//            public void handle(MouseEvent event) {
+//                mouseX = event.getSceneX();
+//                mouseY = event.getSceneY();
+//
+//                corX = getLayoutX();
+//                corY = getLayoutY();
+//            }
+//        });
+//    }
 //    private void testEvent() {
 //        this.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
 //            this.addNewInput();
@@ -343,7 +416,7 @@ public class Element extends Rectangle implements ObservableInterface, Movable {
 
     @Override
     public String toString() {
-        return "Element " + this.hashCode() + "; location X: " + this.getLayoutX() + "; location Y: " + this.getLayoutY();
+        return "Element: " + "OutputSocket=" + connectionOutputSocket + ", InputSockets=" + connectionInputSockets + ", corX: " + corX + "\n";
     }
 
     public int getMaximumNumberOfInputs() {
@@ -453,7 +526,11 @@ public class Element extends Rectangle implements ObservableInterface, Movable {
     }
 
     public void setConnectionOutputSocket(Socket connectionOutputSocket) {
+        if (connectionOutputSocket != null) {
+            sockets.remove(connectionOutputSocket);
+        }
         this.connectionOutputSocket = connectionOutputSocket;
+        setOwnerForOutputSocket();
     }
 
     public ObservableList<Socket> getConnectionInputSockets() {
@@ -461,6 +538,40 @@ public class Element extends Rectangle implements ObservableInterface, Movable {
     }
 
     public void setConnectionInputSockets(ObservableList<Socket> connectionInputSockets) {
+        if (connectionInputSockets != null && !connectionInputSockets.isEmpty()) {
+            sockets.removeAll(connectionInputSockets);
+            numberOfInputs = connectionInputSockets.size();
+            sockets.removeAll(connectionInputSockets);
+        }
         this.connectionInputSockets = connectionInputSockets;
+        createInputLines();
+        bindSockets();
+        sockets.addAll(connectionInputSockets);
+        setOwnerForInputSockets();
     }
+
+    public boolean isIncluded() {
+        return included;
+    }
+
+    public void setIncluded(boolean included) {
+        this.included = included;
+    }
+
+    public boolean isIncluded2() {
+        return included2;
+    }
+
+    public void setIncluded2(boolean included2) {
+        this.included2 = included2;
+    }
+
+    public int getNumberOfInputs() {
+        return numberOfInputs;
+    }
+
+    public void setNumberOfInputs(int numberOfInputs) {
+        this.numberOfInputs = numberOfInputs;
+    }
+
 }

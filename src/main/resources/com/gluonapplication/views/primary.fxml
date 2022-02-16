@@ -61,4 +61,9 @@
          </content>
       </ScrollPane>
    </center>
+   <children>
+      <Pane fx:id="workingSpace1" prefHeight="1000.0" prefWidth="1000.0" />
+      <Pane fx:id="workingSpace2" prefHeight="1000.0" prefWidth="1000.0" />
+      <Pane fx:id="workingSpace3" prefHeight="1000.0" prefWidth="1000.0" />
+   </children>
 </View>

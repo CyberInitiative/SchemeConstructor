@@ -30,8 +30,7 @@ public class VariableBlock extends Rectangle implements ObservableInterface, Mov
 
     private Text symbol = new Text("?");
 
-    private String variable = String.valueOf(symbol);
-
+    //private String variable = String.valueOf(symbol);
     private Socket connectionInputSocket;
     private Line inputLine;
 
@@ -48,14 +47,20 @@ public class VariableBlock extends Rectangle implements ObservableInterface, Mov
         //bindOutputLine();
         bindInputLine();
     }
-    
-    public VariableBlock(ObserverInterface pointObservers[][], boolean state, String variable) {
+
+    public VariableBlock(ObserverInterface pointObservers[][], boolean state, Character smbl) {
         super(40, 40);
         this.pointObservers = pointObservers;
+        this.state = state;
+        getSymbol().setText(String.valueOf(smbl));
         setNodeVisualDetails();
         bindSymbol();
-        //bindOutputLine();
-        bindInputLine();
+        if (state) {
+            bindInputLine();
+        } else {
+            bindOutputLine();
+        }
+
     }
 
     private void setNodeVisualDetails() {
@@ -231,12 +236,11 @@ public class VariableBlock extends Rectangle implements ObservableInterface, Mov
         this.state = state;
     }
 
-    public String getVariable() {
-        return variable;
-    }
-
-    public void setVariable(String variable) {
-        this.variable = variable;
-    }
-
+//    public String getVariable() {
+//        return variable;
+//    }
+//
+//    public void setVariable(String variable) {
+//        this.variable = variable;
+//    }
 }

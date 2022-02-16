@@ -4,11 +4,14 @@ E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\SignalRebuilder.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\RPN_Transformator.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\com\gluonapplication\views\PrimaryPresenter.java
+E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\ConnectionMediator.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\ElementConnector.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\ElementManagmentState.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\ConnectionPath.java
+E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\Facade.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\SymbolType.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\Connector.java
+E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\SchemeGenerator.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\com\gluonapplication\DrawerManager.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\PathPoint.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\ConnectorsManagmentState.java
@@ -20,7 +23,6 @@ E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\ConnectionAnchor.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\Signal.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\PathPointsManager.java
-E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\ShemeGenerator.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\Socket.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\MyGroup.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\Symbol.java
@@ -28,3 +30,4 @@ E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\com\gluonapplication\views\PrimaryView.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\MyThread.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\Movable.java
+E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\ConnectionComponent.java

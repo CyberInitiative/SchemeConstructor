@@ -1,5 +1,7 @@
 package models;
 
+import java.util.ArrayList;
+import java.util.List;
 import javafx.beans.property.DoubleProperty;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -18,7 +20,10 @@ public class Socket extends Circle implements ObserverInterface {
 
     private final static double RADIUS = 5;
 
-    private ConnectionAnchor connector;
+    private Signal signal;
+
+    private ConnectionAnchor mainAnchor;
+    private List<ConnectionAnchor> connectionAnchors = new ArrayList<>();
 
     private Movable ownerComponent = null;
     private boolean connected = false;
@@ -46,7 +51,7 @@ public class Socket extends Circle implements ObserverInterface {
         x.bind(centerXProperty());
         y.bind(centerYProperty());
     }
-
+    
     public void bind(DoubleProperty x, DoubleProperty y) {
         x.unbind();
         y.unbind();
@@ -57,26 +62,66 @@ public class Socket extends Circle implements ObserverInterface {
     @Override
     public void update(ObservableInterface observable) {
         ConnectionAnchor anchor = (ConnectionAnchor) observable;
-        anchor.setIdentificator(observable.hashCode());
-        if (this.getCenterX() == anchor.getCenterX() && this.getCenterY() == anchor.getCenterY() && connector == null) {
+        if (this.getCenterX() == anchor.getCenterX() && this.getCenterY() == anchor.getCenterY() && mainAnchor == null) {
+            mainAnchor = anchor;
+            mainAnchor.setConnectedSocket(this);
+            mainAnchor.centerXProperty().bind(this.centerXProperty());
+            mainAnchor.centerYProperty().bind(this.centerYProperty());
+            mainAnchor.setSocketsElementOwner(ownerComponent);
+            if (this.getRole() == Role.Output) {
+                mainAnchor.setStatus(true);
+            } else if (this.getRole() == Role.Input) {
+                mainAnchor.setStatus(false);
+            }
+            //if (mainAnchor.getSecondEnd().getSocketsElementOwner() == mainAnchor.getSocketsElementOwner()) {
+            /*
+                Запретить соединение;
+                
+             */
+            //}
+        } else if (this.getCenterX() == anchor.getCenterX() && this.getCenterY() == anchor.getCenterY() && mainAnchor != null) {
+            System.out.println("here");
+            connectionAnchors.add(anchor);
+            anchor.setConnectedSocket(this);
             anchor.centerXProperty().bind(this.centerXProperty());
             anchor.centerYProperty().bind(this.centerYProperty());
             anchor.setSocketsElementOwner(ownerComponent);
-            connector = anchor;
-            if (connector.getSecondEnd().getSocketsElementOwner() == connector.getSocketsElementOwner()) {
+            if (this.getRole() == Role.Output) {
+                anchor.setStatus(true);
+            } else if (this.getRole() == Role.Input) {
                 /*
-                Запретить соединение;
-                
+                Запретить подсоединение;
                  */
             }
-        } else if ((this.getCenterX() != anchor.getCenterX() | this.getCenterY() != anchor.getCenterY()) && connector != null) {
-            if (connector.getCenterX() != this.getCenterX() | connector.getCenterY() != this.getCenterY()) {
-                connector.centerXProperty().unbind();
-                connector.centerYProperty().unbind();
-                connector = null;
+        } else if ((this.getCenterX() != anchor.getCenterX() | this.getCenterY() != anchor.getCenterY()) && mainAnchor == anchor) {
+            anchor.setConnectedSocket(null);
+            mainAnchor = null;
+            if (!connectionAnchors.isEmpty()) {
+                mainAnchor = connectionAnchors.get(0);
             }
         }
-        System.out.println("UPDATED: " + this);
+        //System.out.println("UPDATED: " + this);
+    }
+
+    public void checkOwnerComponent() {
+        if (ownerComponent != null) {
+            System.out.println("Owner is not null");
+        } else {
+            System.out.println("Owner is null");
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Socket: " + "role: " + role + ", signa: " + signal + ", mainAnchor=" + mainAnchor + ", connectionAnchors=" + connectionAnchors + '}';
+    }
+
+    public List<ConnectionAnchor> getConnectionAnchors() {
+        return connectionAnchors;
+    }
+
+    public void setConnectionAnchors(List<ConnectionAnchor> connectionAnchors) {
+        this.connectionAnchors = connectionAnchors;
     }
 
     public Role getRole() {
@@ -99,16 +144,19 @@ public class Socket extends Circle implements ObserverInterface {
         this.ownerComponent = ownerComponent;
     }
 
-    public ConnectionAnchor getConnector() {
-        return connector;
+    public ConnectionAnchor getMainAnchor() {
+        return mainAnchor;
     }
 
-    public void setConnector(ConnectionAnchor connector) {
-        this.connector = connector;
+    public void setMainAnchor(ConnectionAnchor mainAnchor) {
+        this.mainAnchor = mainAnchor;
     }
 
-    @Override
-    public String toString() {
-        return "Socket{" + " connector=" + connector + ", ownerElement=" + ownerComponent + '}';
+    public Signal getSignal() {
+        return signal;
+    }
+
+    public void setSignal(Signal signal) {
+        this.signal = signal;
     }
 }

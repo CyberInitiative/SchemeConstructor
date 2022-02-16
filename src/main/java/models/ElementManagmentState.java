@@ -34,22 +34,22 @@ public class ElementManagmentState extends State {
 
     @Override
     public void clickProcessing(MouseEvent event) {
-        if (event.getTarget().getClass() == Element.class) {
-            Element elem = (Element) event.getTarget();
-            itemE2.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent e) {
-                    elem.deleteInput();
-                }
-            });
-
-            Point2D point = elem.localToScreen(event.getSceneX(), event.getSceneY());
-            Point2D scre = elem.screenToLocal(point.getX(), point.getY());
-            double f = point.getX() - scre.getX();
-            double s = point.getY() - scre.getY();
-            contextMenuElement.show(elem, f, s);
-
-        }
+//        if (event.getTarget().getClass() == Element.class) {
+//            Element elem = (Element) event.getTarget();
+//            itemE2.setOnAction(new EventHandler<ActionEvent>() {
+//                @Override
+//                public void handle(ActionEvent e) {
+//                    elem.deleteInput();
+//                }
+//            });
+//
+//            Point2D point = elem.localToScreen(event.getSceneX(), event.getSceneY());
+//            Point2D scre = elem.screenToLocal(point.getX(), point.getY());
+//            double f = point.getX() - scre.getX();
+//            double s = point.getY() - scre.getY();
+//            contextMenuElement.show(elem, f, s);
+//
+//        }
     }
 
     @Override

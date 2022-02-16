@@ -17,7 +17,11 @@ public class PathPoint extends Point2D implements ObserverInterface {
     };
 
     public enum RelativeDirectionStatus {
-        Left, Right, Up, Down;
+        Left(3), Right(0), Up(1), Down(2);
+
+        private RelativeDirectionStatus(int priority) {
+            this.priority = priority;
+        }
 
         public int getPriority() {
             return priority;
@@ -25,6 +29,10 @@ public class PathPoint extends Point2D implements ObserverInterface {
 
         public void setPriority(int priority) {
             this.priority = priority;
+        }
+
+        public RelativeDirectionStatus getDir() {
+            return RelativeDirectionStatus.this;
         }
 
         private int priority;
@@ -52,6 +60,10 @@ public class PathPoint extends Point2D implements ObserverInterface {
 
     }
 
+    public void setPriority() {
+        this.nodePriority = getRelativeDir().getPriority();
+    }
+
     public PathPoint(PathPointStatus status, double corX, double corY, int col, int row) {
         super(corX, corY);
         this.status = status;
@@ -60,7 +72,7 @@ public class PathPoint extends Point2D implements ObserverInterface {
     }
 
     public void calculateHeuristic(PathPoint endPathPoint) {
-        this.h = Math.abs(this.getCol() - endPathPoint.getCol()) + Math.abs(this.getRow() - endPathPoint.getRow());
+        this.h = ((Math.abs(this.getCol() - endPathPoint.getCol()) + Math.abs(this.getRow() - endPathPoint.getRow())) * 10);
     }
 
     public void calculateF() {
@@ -157,7 +169,8 @@ public class PathPoint extends Point2D implements ObserverInterface {
 
     @Override
     public String toString() {
-        return "PathPoint{" + "status=" + status + ", g=" + g + ", h=" + h + ", f=" + f + ", col=" + col + ", row=" + row + ", nodePriority=" + nodePriority + '}';
+        return "PathPoint{" + "X: " + getX() + "; Y: " + getY() + "; status=" + status + ", g=" + g + ", h=" + h + ", f=" + f + ", col=" + col + ", row=" + row + ", nodePriority=" + nodePriority
+                + ", direction: " + getRelativeDir() + '}';
     }
 
 }

@@ -21,4 +21,7 @@ public interface Movable {
     public Text getSymbol();
     
     public void setToFront();
+
+    @Override
+    public String toString();   
 }
