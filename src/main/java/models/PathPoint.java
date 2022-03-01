@@ -13,7 +13,7 @@ import javafx.scene.shape.Shape;
 public class PathPoint extends Point2D implements ObserverInterface {
 
     public enum PathPointStatus {
-        Obstructuion, PartOfPath, Passable
+        Obstructuion, PartOfPath, Passable, Socket
     };
 
     public enum RelativeDirectionStatus {
@@ -40,7 +40,7 @@ public class PathPoint extends Point2D implements ObserverInterface {
 
     PathPoint previousPoint = null;
 
-    private Shape obstruction = null;
+    private Shape coveringObject = null;
 
     private PathPointStatus status = PathPointStatus.Passable;
     private RelativeDirectionStatus relativeDir = null;
@@ -82,13 +82,26 @@ public class PathPoint extends Point2D implements ObserverInterface {
     @Override
     public void update(ObservableInterface observable) {
         Shape shape = (Shape) observable;
+        //System.out.println("SHAPE " + shape);
         if (shape.getBoundsInParent().contains(this)) {
-            this.setStatus(PathPoint.PathPointStatus.Obstructuion);
-            obstruction = shape;
+            if (shape.getClass() == Socket.class) {
+                Socket socket = (Socket) shape;
+                socket.setCoveredPathPoint(this);
+                this.setStatus(PathPointStatus.Socket);
+//                System.out.println(socket);
+            } else {
+                this.setStatus(PathPoint.PathPointStatus.Obstructuion);
+            }
+            coveringObject = shape;
         } else if (!shape.getBoundsInParent().contains(this)) {
-            if (obstruction != null) {
-                if (!obstruction.getBoundsInParent().contains(this)) {
-                    obstruction = null;
+            if (coveringObject != null) {
+                if (!coveringObject.getBoundsInParent().contains(this)) {
+//                    if (shape.getClass() == Socket.class) {
+//                        Socket socket = (Socket) shape;
+//                        socket.setCoveredPathPoint(null);
+//                        System.out.println(socket);
+//                    }
+                    coveringObject = null;
                     this.setStatus(PathPoint.PathPointStatus.Passable);
                 }
             }

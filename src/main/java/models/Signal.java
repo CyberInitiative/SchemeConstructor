@@ -18,7 +18,6 @@ public final class Signal {
         this.isIncluded = false;
         checkIsolation(variable);
     }
-
 //    public Signal(Signal signal) {
 //        copyFrom(signal);
 //        this.isIncluded = false;

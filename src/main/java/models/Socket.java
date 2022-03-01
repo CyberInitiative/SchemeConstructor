@@ -1,5 +1,7 @@
 package models;
 
+import static com.gluonapplication.views.PrimaryPresenter.elements;
+import static com.gluonapplication.views.PrimaryPresenter.sockets;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.beans.property.DoubleProperty;
@@ -10,7 +12,7 @@ import javafx.scene.shape.Circle;
  *
  * @author Miroslav Levdikov
  */
-public class Socket extends Circle implements ObserverInterface {
+public class Socket extends Circle implements ObserverInterface, ObservableInterface {
 
     public enum Role {
         Input, Output;
@@ -22,11 +24,14 @@ public class Socket extends Circle implements ObserverInterface {
 
     private Signal signal;
 
-    private ConnectionAnchor mainAnchor;
+    private ConnectionAnchor mainConnectedAnchor;
     private List<ConnectionAnchor> connectionAnchors = new ArrayList<>();
 
     private Movable ownerComponent = null;
     private boolean connected = false;
+
+    private ObserverInterface[][] pointObservers;
+    private PathPoint coveredPathPoint = null;
 
     Socket(Role role) {
         super(RADIUS);
@@ -51,7 +56,7 @@ public class Socket extends Circle implements ObserverInterface {
         x.bind(centerXProperty());
         y.bind(centerYProperty());
     }
-    
+
     public void bind(DoubleProperty x, DoubleProperty y) {
         x.unbind();
         y.unbind();
@@ -62,16 +67,16 @@ public class Socket extends Circle implements ObserverInterface {
     @Override
     public void update(ObservableInterface observable) {
         ConnectionAnchor anchor = (ConnectionAnchor) observable;
-        if (this.getCenterX() == anchor.getCenterX() && this.getCenterY() == anchor.getCenterY() && mainAnchor == null) {
-            mainAnchor = anchor;
-            mainAnchor.setConnectedSocket(this);
-            mainAnchor.centerXProperty().bind(this.centerXProperty());
-            mainAnchor.centerYProperty().bind(this.centerYProperty());
-            mainAnchor.setSocketsElementOwner(ownerComponent);
+        if (this.getCenterX() == anchor.getCenterX() && this.getCenterY() == anchor.getCenterY() && mainConnectedAnchor == null) {
+            mainConnectedAnchor = anchor;
+            mainConnectedAnchor.setConnectedSocket(this);
+            mainConnectedAnchor.centerXProperty().bind(this.centerXProperty());
+            mainConnectedAnchor.centerYProperty().bind(this.centerYProperty());
+            mainConnectedAnchor.setSocketsElementOwner(ownerComponent);
             if (this.getRole() == Role.Output) {
-                mainAnchor.setStatus(true);
+                mainConnectedAnchor.setStatus(true);
             } else if (this.getRole() == Role.Input) {
-                mainAnchor.setStatus(false);
+                mainConnectedAnchor.setStatus(false);
             }
             //if (mainAnchor.getSecondEnd().getSocketsElementOwner() == mainAnchor.getSocketsElementOwner()) {
             /*
@@ -79,8 +84,8 @@ public class Socket extends Circle implements ObserverInterface {
                 
              */
             //}
-        } else if (this.getCenterX() == anchor.getCenterX() && this.getCenterY() == anchor.getCenterY() && mainAnchor != null) {
-            System.out.println("here");
+        } else if (this.getCenterX() == anchor.getCenterX() && this.getCenterY() == anchor.getCenterY() && mainConnectedAnchor != null) {
+            //System.out.println("here");
             connectionAnchors.add(anchor);
             anchor.setConnectedSocket(this);
             anchor.centerXProperty().bind(this.centerXProperty());
@@ -93,14 +98,46 @@ public class Socket extends Circle implements ObserverInterface {
                 Запретить подсоединение;
                  */
             }
-        } else if ((this.getCenterX() != anchor.getCenterX() | this.getCenterY() != anchor.getCenterY()) && mainAnchor == anchor) {
+        } else if ((this.getCenterX() != anchor.getCenterX() | this.getCenterY() != anchor.getCenterY()) && mainConnectedAnchor == anchor) {
             anchor.setConnectedSocket(null);
-            mainAnchor = null;
+            mainConnectedAnchor = null;
             if (!connectionAnchors.isEmpty()) {
-                mainAnchor = connectionAnchors.get(0);
+                mainConnectedAnchor = connectionAnchors.get(0);
             }
         }
         //System.out.println("UPDATED: " + this);
+    }
+
+//    public void swapSignals(Socket socket) {
+//        Signal temp;
+//        temp = socket.getSignal();
+//        socket.setSignal(this.getSignal());
+//        this.setSignal(temp);
+//    }
+
+    @Override
+    public void registerObserver(ObserverInterface observer) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void removeObserver(ObserverInterface observer) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void notifyObservers() {
+//        for (int i = 0; i < pointObservers.length; i++) {
+//            for (int j = 0; j < pointObservers[0].length; j++) {
+//                for (ObserverInterface socket : sockets) {
+//                    pointObservers[i][j].update((ObservableInterface) socket);
+//                }
+////                for (Element elem : elements) {
+////                    pointObservers[i][j].update(elem);
+////                    System.out.println("P");
+////                }
+//            }
+//        }
     }
 
     public void checkOwnerComponent() {
@@ -113,7 +150,8 @@ public class Socket extends Circle implements ObserverInterface {
 
     @Override
     public String toString() {
-        return "Socket: " + "role: " + role + ", signa: " + signal + ", mainAnchor=" + mainAnchor + ", connectionAnchors=" + connectionAnchors + '}';
+        return "Socket: " + "role: " + role + ", sig: " + signal + ", mainAnc: " + mainConnectedAnchor + ", connAnc:" + connectionAnchors
+                + ", coveredPoint: " + coveredPathPoint + '}';
     }
 
     public List<ConnectionAnchor> getConnectionAnchors() {
@@ -144,12 +182,12 @@ public class Socket extends Circle implements ObserverInterface {
         this.ownerComponent = ownerComponent;
     }
 
-    public ConnectionAnchor getMainAnchor() {
-        return mainAnchor;
+    public ConnectionAnchor getMainConnectedAnchor() {
+        return mainConnectedAnchor;
     }
 
-    public void setMainAnchor(ConnectionAnchor mainAnchor) {
-        this.mainAnchor = mainAnchor;
+    public void setMainConnectedAnchor(ConnectionAnchor mainConnectedAnchor) {
+        this.mainConnectedAnchor = mainConnectedAnchor;
     }
 
     public Signal getSignal() {
@@ -158,5 +196,21 @@ public class Socket extends Circle implements ObserverInterface {
 
     public void setSignal(Signal signal) {
         this.signal = signal;
+    }
+
+    public ObserverInterface[][] getPointObservers() {
+        return pointObservers;
+    }
+
+    public void setPointObservers(ObserverInterface[][] pointObservers) {
+        this.pointObservers = pointObservers;
+    }
+
+    public PathPoint getCoveredPathPoint() {
+        return coveredPathPoint;
+    }
+
+    public void setCoveredPathPoint(PathPoint coveredPathPoint) {
+        this.coveredPathPoint = coveredPathPoint;
     }
 }

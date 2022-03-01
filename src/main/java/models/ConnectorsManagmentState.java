@@ -27,6 +27,8 @@ public class ConnectorsManagmentState extends State {
 
         }
         if (event.getTarget().getClass() == Socket.class) {
+            Socket socket = (Socket) event.getTarget();
+            //System.out.println("SIGNAL: " + socket.getSignal());
             Connector connector = new Connector((Socket) event.getTarget());
             connector.registerComponents();
             pressManipulation(connector.getEndConnectionAnchor(), event.getSceneX(), event.getSceneY());
@@ -69,15 +71,14 @@ public class ConnectorsManagmentState extends State {
         if (event.getTarget().getClass() == Socket.class || event.getTarget().getClass() == ConnectionAnchor.class) {
             Pane pane = (Pane) event.getSource();
             targetConnectionAnchor.notifyObservers();
-
             /*
             Необходимо узнать, соединен ли данный Socket с помощью других коннекторов, чтобы исходя из этого
             выбрать нужный конструктор для создания маршрута. 
              */
-            if (targetConnectionAnchor.getConnectedSocket() != null && targetConnectionAnchor.getConnectedSocket().getMainAnchor() != targetConnectionAnchor) {
+            if (targetConnectionAnchor.getConnectedSocket() != null && targetConnectionAnchor.getConnectedSocket().getMainConnectedAnchor() != targetConnectionAnchor) {
 
                 var point = targetConnectionAnchor.requestSecondAnchor(targetConnectionAnchor);
-                var clP = targetConnectionAnchor.getConnectedSocket().getMainAnchor().getMediator().getConnectionPath().getClosestPoint(point.getCenterX(), point.getCenterY());
+                var clP = targetConnectionAnchor.getConnectedSocket().getMainConnectedAnchor().getMediator().getConnectionPath().getClosestPoint(point.getCenterX(), point.getCenterY());
                 ConnectionPath path = new ConnectionPath(point, clP, pane);
                 targetConnectionAnchor.getMediator().registerPath(path);
 
@@ -88,8 +89,7 @@ public class ConnectorsManagmentState extends State {
             System.out.println("RELEASED 2");
             targetConnectionAnchor.requestConnectionLine().setVisible(false);
         }
-        
-        targetConnectionAnchor = null;
+        targetConnectionAnchor = null; 
     }
 
     @Override

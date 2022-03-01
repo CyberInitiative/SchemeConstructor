@@ -2,6 +2,7 @@ package models;
 
 import com.gluonapplication.views.PrimaryPresenter;
 import static com.gluonapplication.views.PrimaryPresenter.elements;
+import java.util.ArrayList;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.paint.Color;
@@ -108,7 +109,24 @@ public class VariableBlock extends Rectangle implements ObservableInterface, Mov
         connectionOutputSocket.centerXProperty().bind(this.layoutXProperty().add(BLOCK_WIDTH + 10));
         connectionOutputSocket.centerYProperty().bind(this.layoutYProperty().add(BLOCK_HEIGHT / 2));
         PrimaryPresenter.sockets.add(connectionOutputSocket);
+    }
 
+    @Override
+    public ArrayList<Socket> getInputSockets() {
+        ArrayList<Socket> array = new ArrayList<>();
+        if (connectionInputSocket != null) {
+            array.add(connectionInputSocket);
+        }
+        return array;
+    }
+
+    @Override
+    public ArrayList<Socket> getOutputSockets() {
+        ArrayList<Socket> array = new ArrayList<>();
+        if (connectionOutputSocket != null) {
+            array.add(connectionOutputSocket);
+        }
+        return array;
     }
 
     @Override
@@ -133,6 +151,12 @@ public class VariableBlock extends Rectangle implements ObservableInterface, Mov
             for (int j = 0; j < pointObservers[0].length; j++) {
                 for (VariableBlock block : PrimaryPresenter.blocks) {
                     pointObservers[i][j].update(block);
+                    if (connectionInputSocket != null) {
+                        pointObservers[i][j].update(connectionInputSocket);
+                    }
+                    if (connectionOutputSocket != null) {
+                        pointObservers[i][j].update(connectionOutputSocket);
+                    }
                 }
             }
         }
@@ -234,6 +258,14 @@ public class VariableBlock extends Rectangle implements ObservableInterface, Mov
 
     public void setState(boolean state) {
         this.state = state;
+    }
+
+    public void setOwnerForOutputSocket() {
+        this.getConnectionOutputSocket().setOwnerComponent(this);
+    }
+
+    public void setOwnerForInputSockets() {
+        this.getConnectionInputSocket().setOwnerComponent(this);
     }
 
 //    public String getVariable() {

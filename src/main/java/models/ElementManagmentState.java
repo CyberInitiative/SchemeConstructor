@@ -2,7 +2,9 @@ package models;
 
 import static com.gluonapplication.views.PrimaryPresenter.elements;
 import static com.gluonapplication.views.PrimaryPresenter.pointManager;
+import java.util.ArrayList;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
@@ -34,6 +36,11 @@ public class ElementManagmentState extends State {
 
     @Override
     public void clickProcessing(MouseEvent event) {
+        if (event.getTarget().getClass() == Element.class) {
+            Element elem = (Element) event.getTarget();
+            System.out.println("GET SIG: " + elem.getConnectionOutputSocket().getSignal().getVariable());
+
+        }
 //        if (event.getTarget().getClass() == Element.class) {
 //            Element elem = (Element) event.getTarget();
 //            itemE2.setOnAction(new EventHandler<ActionEvent>() {
@@ -56,12 +63,31 @@ public class ElementManagmentState extends State {
     public void pressProcessing(MouseEvent event) {
         if (event.getTarget() instanceof Movable) {
             Shape shape = (Shape) event.getTarget();
-            Movable mov = (Movable) event.getTarget();
-            mov.setMouseX(event.getSceneX());
-            mov.setMouseY(event.getSceneY());
-            mov.setCorX(shape.getLayoutX());
-            mov.setCorY(shape.getLayoutY());
-            mov.setToFront();
+            Movable movableInstance = (Movable) event.getTarget();
+            Pane pane = (Pane) event.getSource();
+
+            pressProcessingSocketsSetUp(movableInstance.getInputSockets(), pane);
+            pressProcessingSocketsSetUp(movableInstance.getOutputSockets(), pane);
+
+            movableInstance.setMouseX(event.getSceneX());
+            movableInstance.setMouseY(event.getSceneY());
+            movableInstance.setCorX(shape.getLayoutX());
+            movableInstance.setCorY(shape.getLayoutY());
+            movableInstance.setToFront();
+        }
+    }
+
+    private void pressProcessingSocketsSetUp(ArrayList<Socket> sockets, Pane pane) {
+        for (Socket socket : sockets) {
+            if (socket.getMainConnectedAnchor() != null) {
+                if (socket.getMainConnectedAnchor().requestConnectionPath() != null) {
+                    var pathLine = socket.getMainConnectedAnchor().requestConnectionPath().getPathPolyline();
+                    if (pathLine != null) {
+                        pane.getChildren().remove(pathLine);
+                    }
+                }
+                socket.getMainConnectedAnchor().requestConnectionLine().setVisible(true);
+            }
         }
     }
 
@@ -88,8 +114,26 @@ public class ElementManagmentState extends State {
         if (event.getTarget() instanceof ObservableInterface & event.getTarget() instanceof Movable) {
             ObservableInterface observable = (ObservableInterface) event.getTarget();
             observable.notifyObservers();
+            Movable movableInstance = (Movable) event.getTarget();
+
+            releaseProcessingSocketsSetUp(movableInstance.getInputSockets());
+            releaseProcessingSocketsSetUp(movableInstance.getOutputSockets());
         }
+
         System.out.println("RELEASED 1");
+    }
+
+    private void releaseProcessingSocketsSetUp(ArrayList<Socket> sockets) {
+        for (Socket socket : sockets) {
+            if (socket.getMainConnectedAnchor() != null) {
+                socket.getMainConnectedAnchor().requestConnectionLine().setVisible(false);
+                if (socket.getMainConnectedAnchor().requestConnectionPath() != null) {
+                    var ancA = socket.getMainConnectedAnchor().requestConnectionPath().getMediator().getStartConnectionAnchor();
+                    var ancB = socket.getMainConnectedAnchor().requestConnectionPath().getMediator().getEndConnectionAnchor();
+                    socket.getMainConnectedAnchor().requestConnectionPath().buildPath(ancA, ancB);
+                }
+            }
+        }
     }
 
     @Override

@@ -1,5 +1,6 @@
 package models;
 
+import static com.gluonapplication.views.PrimaryPresenter.connectors;
 import static com.gluonapplication.views.PrimaryPresenter.elements;
 import static com.gluonapplication.views.PrimaryPresenter.pointManager;
 import static com.gluonapplication.views.PrimaryPresenter.sockets;
@@ -10,6 +11,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Bounds;
+import javafx.scene.layout.Pane;
 import javafx.scene.shape.Line;
 import javafx.util.Pair;
 
@@ -18,39 +21,60 @@ import javafx.util.Pair;
  * @author Miroslav Levdikov
  */
 public class SchemeGenerator {
-    
+
     private ArrayList<VariableBlock> blocks = new ArrayList<>();
     private ArrayList<Element> elems = new ArrayList<>();
-    
+    private ArrayList<Connector> connectors = new ArrayList<>();
+
     private HashMap<Socket, Socket> socketMap = new HashMap<>();
+    private Pane pane;
 
     //Comparator<Element> comparator = (o1, o2) -> o1.getConnectionOutputSocket().getSignal().getLayer().compareTo(o2.getConnectionOutputSocket().getSignal().getLayer());
     Comparator<Element> comparator = Comparator.comparing(obj -> obj.getConnectionOutputSocket().getSignal().getLayer());
-    
+
     public void createStartVariableBlocks(ArrayList<Character> signals) {
         for (int i = 0; i < signals.size(); i++) {
             VariableBlock block = new VariableBlock(pointManager.getAllPoints(), false, signals.get(i));
-            blocks.add(block);
+            block.getConnectionOutputSocket().setSignal(new Signal(signals.get(i).toString(), null));
+            block.setOwnerForOutputSocket();
+            block.setLayoutY(i);
+            //.out.println(block.getConnectionOutputSocket());
+            this.blocks.add(block);
         }
     }
-    
-    public void buildStartVariableBlocks() {
-        /*
-        Создание блоков переменных для каждого обнаруженного сигнала в формуле;
-         */
-        double indent = calculateIndent(120, blocks.size());
-        for (int i = 0; i < blocks.size(); i++) {
+
+    public void setPositionForVariableBlocks() {
+        double indent = calculateIndent(120, this.blocks.size());
+//        for (int i = blocks.size(); i-- > 0;) {
+//            if (i == blocks.size() - 1) {
+//                blocks.get(i).setLayoutX(elems.get(elems.size() - 1).getLayoutX() - 120);
+//                blocks.get(i).setLayoutY(500 - (indent - 20));
+//                this.blocks.get(i).relocate(elems.get(elems.size() - 1).getLayoutX() - 120, 500 - (indent - 20));
+//            } else {
+//                if (this.blocks.size() > 1) {
+//                    blocks.get(i).setLayoutX(elems.get(elems.size() - 1).getLayoutX() - 120);
+//                    blocks.get(i).setLayoutY(blocks.get(i + 1).getLayoutY() + 120);
+//                    this.blocks.get(i).relocate(elems.get(elems.size() - 1).getLayoutX() - 120, this.blocks.get(i + 1).getLayoutY() + 120);
+//                }
+//            }
+//        }
+
+        for (int i = 0; i < this.blocks.size(); i++) {
             if (i == 0) {
-                blocks.get(i).relocate(elems.get(elems.size() - 1).getLayoutX() - 120, 500 - (indent - 20));
+                //blocks.get(i).setLayoutX(elems.get(elems.size() - 1).getLayoutX() - 120);
+                //blocks.get(i).setLayoutY(500 - (indent - 20));
+                this.blocks.get(i).relocate(elems.get(elems.size() - 1).getLayoutX() - 120, 500 - (indent - 20));
             } else {
-                if (blocks.size() > 1) {
-                    blocks.get(i).relocate(elems.get(elems.size() - 1).getLayoutX() - 120, blocks.get(i - 1).getLayoutY() + 120);
+                if (this.blocks.size() > 1) {
+                    //blocks.get(i).setLayoutX(elems.get(elems.size() - 1).getLayoutX() - 120);
+                    //blocks.get(i).setLayoutY(blocks.get(i - 1).getLayoutY() + 120);
+                    this.blocks.get(i).relocate(elems.get(elems.size() - 1).getLayoutX() - 120, this.blocks.get(i - 1).getLayoutY() + 120);
                 }
             }
         }
     }
-    
-    public ArrayList<Element> formElements(ArrayList<Signal> rebuildedSignals, ArrayList<Character> signals) {
+
+    public ArrayList<Element> formElements(ArrayList<Signal> rebuildedSignals) {
         //Создатать элементы по количеству сигналов.
         for (int i = 0; i < rebuildedSignals.size(); i++) {
             if (rebuildedSignals.get(i).getVariable().length() != 1) {
@@ -61,13 +85,13 @@ public class SchemeGenerator {
         }
         //System.out.println("BEFORE BEFORE: " + elems);
         for (int i = 0; i < elems.size(); i++) {
-            setConnectionsElements(rebuildedSignals, elems.get(i), signals);
+            setConnectionsElements(rebuildedSignals, elems.get(i));
         }
         groupByFour(elems);
         return elems;
     }
-    
-    private void setConnectionsElements(ArrayList<Signal> rebuildedSignals, Element currentElement, ArrayList<Character> signals) {
+
+    private void setConnectionsElements(ArrayList<Signal> rebuildedSignals, Element currentElement) {
         //Установить связи между элементами. В один элемент входит только два сигнала;
         for (int i = 0; i < rebuildedSignals.size(); i++) {
             var output = currentElement.getConnectionOutputSocket(); //Сокет выхода элемента;
@@ -79,12 +103,13 @@ public class SchemeGenerator {
                             rebuildedSignals.get(j).setIncluded(true);
                             if (rebuildedSignals.get(j).getVariable().length() == 1) {
 //                                rebuildedSignals.get(j).setIncluded(true); // don't touch
-                                for (Character signal : signals) {
-                                    if (signal.toString().equals(rebuildedSignals.get(j).getVariable())) {
+                                for (VariableBlock var : blocks) {
+                                    if (var.getConnectionOutputSocket().getSignal().getVariable().equals(rebuildedSignals.get(j).getVariable())) {
 //                                        ElementConnectPoint elemConPoint = new ElementConnectPoint(rebuildedSignals.get(j));
                                         for (Socket socket : currentElement.getConnectionInputSockets()) {
                                             if (socket.getSignal() == null) {
-                                                socket.setSignal(rebuildedSignals.get(j));
+                                                socket.setSignal(var.getConnectionOutputSocket().getSignal());
+                                                //System.out.println("VAR: " + var.getConnectionOutputSocket().getSignal());
                                                 break;
                                             }
                                         }
@@ -106,18 +131,6 @@ public class SchemeGenerator {
         }
     }
 
-//    private void buildComplicatedElement(ArrayList<Element> elements) {
-//        for (int i = elements.size(); --i >= 0;) {
-//            ArrayList<Signal> signals = new ArrayList<>();
-//            for (int j = 0; j < elements.get(i).getConnectionInputSockets().size(); j++) {
-//                var currElOp = elements.get(i).getConnectionOutputSocket().getSignal().getOperator();
-//                var inpCurElOP = elements.get(i).getConnectionInputSockets().get(j).getSignal().getOperator();//Оператор элемента i
-//                if (currElOp != null && !currElOp.equals("!") && currElOp.equals(inpCurElOP) && !elements.get(i).isIncluded()) {
-//                    
-//                }
-//            }
-//        }
-//    }
     private void groupByFourBody(Element elem, int index, ArrayList<Element> arr) {
         var currOper = elem.getConnectionOutputSocket().getSignal().getOperator();
         main:
@@ -152,14 +165,14 @@ public class SchemeGenerator {
             }
         }
     }
-    
+
     private void groupByFour(ArrayList<Element> arr) {
         //System.out.println("BEFORE: " + arr);
         for (int i = 0; i < arr.size(); i++) {
             groupByFourBody(arr.get(i), i, arr);
             checkSameInBrackets(arr.get(i), i, arr);
         }
-        
+
         arr.removeIf(x -> x.isIncluded2() == true);
         arr.removeIf(x -> x.getConnectionOutputSocket().getSignal().getVariable().equals("#"));
         for (Element elem : arr) {
@@ -170,28 +183,28 @@ public class SchemeGenerator {
             }
             elem.getConnectionInputSockets().removeIf(x -> x.getSignal() == null);
             elem.setNumberOfInputs(elem.getConnectionInputSockets().size());
-            elem.removeLines();
+            elem.setUpSockets();
+            elem.swapInputSockets();
         }
-        
-        for (int j = 0; j < arr.size(); j++) {
-            arr.get(j).setOwnerForAllSockets();
-        }
-        for (int i = 0; i < elems.size(); i++) {
-            if (i != elems.size() - 1) {
-                for (int j = 0; j < elems.get(i + 1).getConnectionInputSockets().size(); j++) {
-                    if (elems.get(i).getConnectionOutputSocket().getSignal() == elems.get(i + 1).getConnectionInputSockets().get(j).getSignal()) {
-                        socketMap.put(elems.get(i).getConnectionOutputSocket(), elems.get(i + 1).getConnectionInputSockets().get(j));
-                        break;
-                    }
-                }
-            }
-        }
-        connectVarBlocks();
+//        for (int i = 0; i < elems.size(); i++) {
+//            if (i != elems.size() - 1) {
+//                for (int j = 0; j < elems.get(i + 1).getConnectionInputSockets().size(); j++) {
+//                    if (elems.get(i).getConnectionOutputSocket().getSignal() == elems.get(i + 1).getConnectionInputSockets().get(j).getSignal()) {
+//                        socketMap.put(elems.get(i).getConnectionOutputSocket(), elems.get(i + 1).getConnectionInputSockets().get(j));
+//                        break;
+//                    }
+//                }
+//            }
+//        }
+        findSignals();
+        findSignalsFromBlocks();
         setLayers(arr.get(arr.size() - 1), 1, arr);
         Collections.sort(arr, comparator);
         setByLayers(arr);
+        elements.addAll(arr);
+        //setConnectionPaths();
     }
-    
+
     public double calculateIndent(double indent, int size) {
         double calcIndent = 0;
         if (size > 1) {
@@ -199,7 +212,7 @@ public class SchemeGenerator {
         }
         return calcIndent;
     }
-    
+
     public void setByLayers(ArrayList<Element> elems) {
         ArrayList<ArrayList<Element>> array = new ArrayList<>();
         ArrayList<Element> currentList = new ArrayList<>();
@@ -219,11 +232,11 @@ public class SchemeGenerator {
                 }
             }
         }
-        
+
         var firstElem = array.get(0).get(0);
         firstElem.setLayoutX(700);
         firstElem.setLayoutY(500);
-        
+
         for (int j = 1; j < array.size(); j++) {
             double dist = calculateIndent(120, array.get(j).size());
             for (int i = 0; i < array.get(j).size(); i++) {
@@ -239,15 +252,7 @@ public class SchemeGenerator {
             }
         }
     }
-    
-    private void connectElements() {
-        for (int i = 0; i < elems.size(); i++) {
-            for (int j = 0; j < elems.get(i).getConnectionInputSockets().size(); j++) {
-                
-            }
-        }
-    }
-    
+
     public void setLayers(Element element, int layer, ArrayList<Element> arr) {
         element.getConnectionOutputSocket().getSignal().setLayer(layer);
         var inputs = element.getConnectionInputSockets();
@@ -262,24 +267,32 @@ public class SchemeGenerator {
             }
         }
     }
-    
-    public void connectVarBlocks() {
-        System.out.println("BLOCKS " + blocks.size());
-        for (VariableBlock block : blocks) {
-            for (Element elem : elems) {
-                for (int i = 0; i < elem.getConnectionInputSockets().size(); i++) {
-                    //System.out.println(elem.getConnectionInputSockets().get(i));
-                    //System.out.println("BLOCK: " + block.getSymbol().getText());
-                    //System.out.println("ELEM: " + elem.getConnectionInputSockets().get(i).getSignal().getVariable());
-                    if (block.getSymbol().getText() != null && elem.getConnectionInputSockets().get(i).getSignal() != null) {
-//                        if (block.getSymbol().getText().equals(elem.getConnectionInputSockets().get(i).getSignal().getVariable())) {
-//                            socketMap.put(elem.getConnectionInputSockets().get(i), block.getConnectionOutputSocket());
-//                        }
+
+    public void findSignals() {
+        for (int i = elems.size(); i-- > 0;) {
+            for (int j = 0; j < elems.get(i).getConnectionInputSockets().size(); j++) {
+                for (int l = elems.size(); l-- > 0;) {
+                    if (elems.get(l).getConnectionOutputSocket().getSignal() == elems.get(i).getConnectionInputSockets().get(j).getSignal()) {
+                        socketMap.put(elems.get(i).getConnectionInputSockets().get(j), elems.get(l).getConnectionOutputSocket());
                     }
                 }
             }
         }
-        System.out.println("MAP! " + socketMap);
+    }
+
+    public void findSignalsFromBlocks() {
+        for (VariableBlock block : blocks) {
+            for (Element elem : elems) {
+                for (int i = 0; i < elem.getConnectionInputSockets().size(); i++) {
+                    if (block.getConnectionOutputSocket().getSignal().getVariable().equals(elem.getConnectionInputSockets().get(i).getSignal().getVariable())) {
+                        //System.out.println("BLOCK: " + block.getConnectionOutputSocket().getSignal());
+                        //System.out.println("ELEM: " + elem.getConnectionInputSockets().get(i).getSignal());
+                        socketMap.put(elem.getConnectionInputSockets().get(i), block.getConnectionOutputSocket());
+                    }
+                }
+            }
+        }
+        //System.out.println("MAP! " + socketMap);
     }
     //    public void rec(Element elem, int layer, ArrayList<Pair<Integer, ArrayList<Element>>> arrOfPairs) {
     //        
@@ -300,6 +313,46 @@ public class SchemeGenerator {
     //        }
     //    }
 
+    public void setConnectionPaths() {
+        int i = 0;
+        main:
+        for (Element elem : elems) {
+            i++;
+            for (Socket socket : elem.getConnectionInputSockets()) {
+                if (socketMap.containsKey(socket)) {
+                    Socket curSoc = socketMap.get(socket);
+                    Connector connector = new Connector(socket, curSoc);
+                    connector.registerComponents();
+                    var firstEnd = connector.getStartConnectionAnchor();
+                    var secondEnd = connector.getEndConnectionAnchor();
+                    //System.out.println("Conector" + connector);
+                    this.connectors.add(connector);
+                    firstEnd.notifyObservers();
+                    secondEnd.notifyObservers();
+                    firstEnd.requestConnectionLine().setVisible(false);
+
+                    if ((firstEnd.getConnectedSocket() != null && firstEnd.getConnectedSocket().getMainConnectedAnchor() != firstEnd)) {
+                        var clP = firstEnd.getConnectedSocket().getMainConnectedAnchor().getMediator().getConnectionPath().getClosestPoint(secondEnd.getCenterX(), secondEnd.getCenterY());
+                        ConnectionPath path = new ConnectionPath(secondEnd, clP, pane);
+                        firstEnd.getMediator().registerPath(path);
+                    } else if ((secondEnd.getConnectedSocket() != null && secondEnd.getConnectedSocket().getMainConnectedAnchor() != secondEnd)) {
+                        var clP = secondEnd.getConnectedSocket().getMainConnectedAnchor().getMediator().getConnectionPath().getClosestPoint(firstEnd.getCenterX(), firstEnd.getCenterY());
+                        ////System.out.println("CLP: " + clP);
+                        ConnectionPath path = new ConnectionPath(firstEnd, clP, pane);
+                        secondEnd.getMediator().registerPath(path);
+                    } else {
+                        //System.out.println("here");
+                        //System.out.println("PAN: " + pane);
+                        ConnectionPath path = new ConnectionPath(firstEnd, secondEnd, pane);
+                        firstEnd.getMediator().registerPath(path);
+                        //System.out.println("LINE: " + path.getPathPolyline());
+                        //pane.getChildren().add(path.getPathPolyline());
+                    }
+                }
+            }
+        }
+    }
+
     private void checkSameInBrackets(Element elem, int index, ArrayList<Element> arr) {
         if (index + 1 != arr.size() + 1) {
             for (int f = index + 1; f < arr.size(); f++) {
@@ -319,6 +372,14 @@ public class SchemeGenerator {
                 }
             }
         }
+    }
+
+    public Pane getPane() {
+        return pane;
+    }
+
+    public void setPane(Pane pane) {
+        this.pane = pane;
     }
 
     /*
@@ -376,11 +437,21 @@ public class SchemeGenerator {
     public ArrayList<VariableBlock> getBlocks() {
         return blocks;
     }
-    
+
     public void setBlocks(ArrayList<VariableBlock> blocks) {
         this.blocks = blocks;
     }
+
+    public ArrayList<Connector> getConnectors() {
+        return connectors;
+    }
+
+    public void setConnectors(ArrayList<Connector> connectors) {
+        this.connectors = connectors;
+    }
+
 }
+
 
 /*
 for (int b = currentElement.getConnectionInputSockets().size(); b-- > 0;) {

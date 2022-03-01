@@ -100,12 +100,10 @@ public class PrimaryPresenter {
     };
 
     public void initialize() {
-        facade.buildTheScheme(workingSpace);
         pointManager.generatePoints(workingSpace.getPrefWidth(), workingSpace.getPrefHeight(), 10, 10);
         //pointManager.setOpenedList(pointManager.getAllPathPoints());        
         Image img = new Image("plusEl.png");
         ImageView view = new ImageView(img);
-        //System.out.println(pointManager.getPathPoints());
 
         addElement.setGraphic(view);
         frameRateMeter.start();
@@ -207,6 +205,7 @@ public class PrimaryPresenter {
                             workingSpace.getChildren().add(additem.getOutputLine());
                             workingSpace.getChildren().add(additem.getConnectionOutputSocket());
                         }
+                        additem.notifyObservers();
                     }
                 }
             }
@@ -223,19 +222,30 @@ public class PrimaryPresenter {
                     for (Connector additem : c.getAddedSubList()) {
 
                         additem.add(workingSpace);
+//                        if (additem.getConnectionPath() != null) {
+//                            workingSpace.getChildren().add(additem.getConnectionPath().getPathPolyline());
+//                        }
+
                     }
                 }
             }
 
         });
 
+        facade.getGenerator().setPane(workingSpace);
+        facade.buildTheScheme(workingSpace);
+
         clickEvent();
         pressEvent();
         dragEvent();
         releaseEvent();
-        elements.addAll(facade.getArr());
+        //elements.addAll(facade.getArr()); //удалить
         blocks.addAll(facade.getGenerator().getBlocks());
-        System.out.println("1ARRAY: " + facade.getArr());
+        facade.getGenerator().setConnectionPaths();
+        connectors.addAll(facade.getGenerator().getConnectors());
+        //System.out.println("1ARRAY: " + facade.getArr());
+        //System.out.println("SOCKETs: " + sockets);
+        System.out.println("ELEMENTS: " + elements);
     }
 
     private void setPositionForNewElement(Element element) {

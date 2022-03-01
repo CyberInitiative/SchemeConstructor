@@ -11,8 +11,8 @@ import javafx.scene.layout.Pane;
  */
 public class Facade {
 
-    private String function = "!(D+C)*B+!(A+D)*C+A*C*D+!(A+!C)*!B"; //A+B+C*(D+C) //!A*D*!(C*!B)+B*!(!C+D)+!(!A+!B)*!C
-    private FunctionAnalyzer analyzer = new FunctionAnalyzer();
+    private String function = "!A*D*!(C*!B)+B*!(!C+D)+!(!A+!B)*!C"; //A+B+C*(D+C) //!A*D*!(C*!B)+B*!(!C+D)+!(!A+!B)*!C
+    private FunctionAnalyzer analyzer = new FunctionAnalyzer(); //!A*D*!(C*!B)+B*!(!C+D)+!(!A+!B)*!C
     private RPN_Transformator rpn_transformator = new RPN_Transformator();
     private SignalRebuilder rebuilder = new SignalRebuilder();
     private SchemeGenerator generator = new SchemeGenerator();
@@ -38,8 +38,8 @@ public class Facade {
             analyzer.findAllSignals(rebuildedOperations.get(rebuildedOperations.size() - 1).getVariable());
             analyzer.defineFactualTotalPoints(function);
             generator.createStartVariableBlocks(analyzer.getFactualTotalPoints());
-            arr = generator.formElements(rebuildedOperations, analyzer.getFactualTotalPoints());
-            generator.buildStartVariableBlocks();
+            arr = generator.formElements(rebuildedOperations);
+            generator.setPositionForVariableBlocks();
             //generator.connectVarBlocks();
             //elements.addAll(arr);
 //            for (VariableBlock block : generator.getBlocks()) {

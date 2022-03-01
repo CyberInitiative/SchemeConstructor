@@ -47,34 +47,78 @@ public class ConnectionPath implements ObserverInterface, ConnectionComponent {
     List<PathPoint> closedList = new ArrayList<>();
 
     public ConnectionPath(ConnectionAnchor startAnchor, ConnectionAnchor endAnchor, Pane pane) {
-        for (int i = 0; i < pointManager.getAllPoints().length; i++) {
-            for (int j = 0; j < pointManager.getAllPoints()[0].length; j++) {
-                if (startAnchor.getBoundsInParent().contains(pointManager.getAllPoints()[i][j])) {
-                    if (startAnchor.getStatus() == true) {
-                        startPathPoint = pointManager.getAllPoints()[i][j];
-                    } else if (startAnchor.getStatus() == false) {
-                        endPathPoint = pointManager.getAllPoints()[i][j];
-                    }
-                } else if (endAnchor.getBoundsInParent().contains(pointManager.getAllPoints()[i][j])) {
-                    if (endAnchor.getStatus() == false) {
-                        endPathPoint = pointManager.getAllPoints()[i][j];
-                    } else if (endAnchor.getStatus() == true) {
-                        startPathPoint = pointManager.getAllPoints()[i][j];
-                    }
-                }
+        this.pane = pane;
+        if (startAnchor.getConnectedSocket() != null && endAnchor.getConnectedSocket() != null) {
+            if (startAnchor.getStatus() == true) {
+                startPathPoint = startAnchor.getConnectedSocket().getCoveredPathPoint();
+                endPathPoint = endAnchor.getConnectedSocket().getCoveredPathPoint();
+            } else if (startAnchor.getStatus() == false) {
+                endPathPoint = startAnchor.getConnectedSocket().getCoveredPathPoint();
+                startPathPoint = endAnchor.getConnectedSocket().getCoveredPathPoint();
             }
-        }
-        //System.out.println("@ START POINT: " + startPathPoint);
-        //System.out.println("@ END POINT: " + endPathPoint);
-        if (startPathPoint == null || endPathPoint == null) {
+        } else {
             return;
         }
-        //System.out.println("START POINT: " + startPathPoint);
-        //System.out.println("END POINT: " + endPathPoint);
         //defineMovementPriority();
-        generatePath(startPathPoint, pane);
+        generatePath(startPathPoint);
         generatePolylinePath(pane);
     }
+
+    public void rebuildPath() {
+
+    }
+
+    public void buildPath(ConnectionAnchor startAnchor, ConnectionAnchor endAnchor) {
+        pathPointsList.clear();
+        openList.clear();
+        closedList.clear();
+        if (pathPolyline != null) {
+            pane.getChildren().remove(pathPolyline);
+            pathPolyline.getPoints().clear();
+        }
+        if (startAnchor.getConnectedSocket() != null && endAnchor.getConnectedSocket() != null) {
+            if (startAnchor.getStatus() == true) {
+                startPathPoint = startAnchor.getConnectedSocket().getCoveredPathPoint();
+                endPathPoint = endAnchor.getConnectedSocket().getCoveredPathPoint();
+            } else if (startAnchor.getStatus() == false) {
+                endPathPoint = startAnchor.getConnectedSocket().getCoveredPathPoint();
+                startPathPoint = endAnchor.getConnectedSocket().getCoveredPathPoint();
+            }
+        } else {
+            return;
+        }
+        generatePath(startPathPoint);
+        generatePolylinePath(pane);
+    }
+    //    public ConnectionPath(ConnectionAnchor startAnchor, ConnectionAnchor endAnchor) {
+    //        for (int i = 0; i < pointManager.getAllPoints().length; i++) {
+    //            for (int j = 0; j < pointManager.getAllPoints()[0].length; j++) {
+    //                if (startAnchor.getBoundsInParent().contains(pointManager.getAllPoints()[i][j])) {
+    //                    if (startAnchor.getStatus() == true) {
+    //                        startPathPoint = pointManager.getAllPoints()[i][j];
+    //                    } else if (startAnchor.getStatus() == false) {
+    //                        endPathPoint = pointManager.getAllPoints()[i][j];
+    //                    }
+    //                } else if (endAnchor.getBoundsInParent().contains(pointManager.getAllPoints()[i][j])) {
+    //                    if (endAnchor.getStatus() == false) {
+    //                        endPathPoint = pointManager.getAllPoints()[i][j];
+    //                    } else if (endAnchor.getStatus() == true) {
+    //                        startPathPoint = pointManager.getAllPoints()[i][j];
+    //                    }
+    //                }
+    //            }
+    //        }
+    //        //System.out.println("@ START POINT: " + startPathPoint);
+    //        //System.out.println("@ END POINT: " + endPathPoint);
+    //        if (startPathPoint == null || endPathPoint == null) {
+    //            return;
+    //        }
+    //        //System.out.println("START POINT: " + startPathPoint);
+    //        //System.out.println("END POINT: " + endPathPoint);
+    //        //defineMovementPriority();
+    //        generatePath(startPathPoint);
+    //        generatePolylinePath(pane);
+    //    }
 
     public ConnectionPath(ConnectionAnchor startAnchor, PathPoint endPathPoint, Pane pane) {
         for (int i = 0; i < pointManager.getAllPoints().length; i++) {
@@ -88,12 +132,27 @@ public class ConnectionPath implements ObserverInterface, ConnectionComponent {
         //System.out.println("№ START POINT: " + startPathPoint);
         //System.out.println("№ END POINT: " + endPathPoint);
         //defineMovementPriority();
-        generatePath(startPathPoint, pane);
+        generatePath(startPathPoint);
         generatePolylinePath(pane);
-        Circle circle = new Circle(endPathPoint.getX(),endPathPoint.getY(), 3);
+        Circle circle = new Circle(endPathPoint.getX(), endPathPoint.getY(), 3);
         pane.getChildren().add(circle);
     }
 
+//    public ConnectionPath(ConnectionAnchor startAnchor, PathPoint endPathPoint) {
+//        for (int i = 0; i < pointManager.getAllPoints().length; i++) {
+//            for (int j = 0; j < pointManager.getAllPoints()[0].length; j++) {
+//                if (startAnchor.getBoundsInParent().contains(pointManager.getAllPoints()[i][j])) {
+//                    startPathPoint = pointManager.getAllPoints()[i][j];
+//                }
+//            }
+//        }
+//        this.endPathPoint = endPathPoint;
+//        //defineMovementPriority();
+//        generatePath(startPathPoint);
+//        generatePolylinePath(pane);
+//        Circle circle = new Circle(endPathPoint.getX(),endPathPoint.getY(), 3);
+//        //pane.getChildren().add(circle);
+//    }
     private void defineMovementPriority() {
         if (startPathPoint.getRow() == endPathPoint.getRow() && startPathPoint.getCol() < endPathPoint.getCol()) {
             RelativeDirectionStatus.Right.setPriority(0);
@@ -142,7 +201,7 @@ public class ConnectionPath implements ObserverInterface, ConnectionComponent {
         }
     }
 
-    private void generatePath(PathPoint startPathPoint, Pane pane) {
+    private void generatePath(PathPoint startPathPoint) {
         PathPoint currentPathPoint = startPathPoint; //Первая текущая точка - это стартовая точка пути; 
         openList.add(startPathPoint); //Добавляем стартовую точку в открытый список;
         while (currentPathPoint != endPathPoint) {
@@ -215,25 +274,30 @@ public class ConnectionPath implements ObserverInterface, ConnectionComponent {
     private void checkThisPoint(PathPoint activePoint, PathPoint checkingPoint) {
         if (!closedList.contains(checkingPoint)) {
             if (checkingPoint.getStatus() != PathPointStatus.Obstructuion) {
+                if (checkingPoint.getStatus() == PathPointStatus.Socket) {
+                    if (checkingPoint != startPathPoint && checkingPoint != endPathPoint) {
+                        closedList.add(checkingPoint);
+                        return;
+                    }
+                }
                 if (!openList.contains(checkingPoint)) {
                     openList.add(checkingPoint);
                     checkingPoint.setPreviousPoint(activePoint);
                     checkingPoint.calculateHeuristic(endPathPoint);
                     checkingPoint.setG(DEF_MOV_COST + checkingPoint.getPreviousPoint().getG());
                     checkingPoint.calculateF();
-                } else {
-                    //Пересчет значения F;
-                    if ((activePoint.getG() + DEF_MOV_COST) < checkingPoint.getG()) {
-                        checkingPoint.setG(activePoint.getG() + DEF_MOV_COST);
-                        checkingPoint.calculateF();
-                        checkingPoint.setPreviousPoint(activePoint);
-                    }
                 }
             } else {
-                closedList.add(checkingPoint);
+                //Пересчет значения F;
+                if ((activePoint.getG() + DEF_MOV_COST) < checkingPoint.getG()) {
+                    checkingPoint.setG(activePoint.getG() + DEF_MOV_COST);
+                    checkingPoint.calculateF();
+                    checkingPoint.setPreviousPoint(activePoint);
+                }
             }
+        } else {
+            closedList.add(checkingPoint);
         }
-
     }
 
     private void generatePolylinePath(Pane pane) {
@@ -253,7 +317,7 @@ public class ConnectionPath implements ObserverInterface, ConnectionComponent {
 
         pane.getChildren().add(pathPolyline);
         pathPolyline.toBack();
-        System.out.println("POL COR: " + pathPolyline.getPoints());
+        //System.out.println("POL COR: " + pathPolyline.getPoints());
     }
 
     public PathPoint getClosestPoint(double x, double y) {
@@ -309,6 +373,10 @@ public class ConnectionPath implements ObserverInterface, ConnectionComponent {
 
     public void setPane(Pane pane) {
         this.pane = pane;
+    }
+
+    public Connector getMediator() {
+        return mediator;
     }
 
 }
