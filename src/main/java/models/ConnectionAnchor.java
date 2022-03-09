@@ -28,7 +28,7 @@ public class ConnectionAnchor extends Circle implements ObservableInterface, Con
 
     //private Line connectionLine;
     //private ConnectionAnchor secondEnd;
-    private Movable socketsElementOwner;
+    private SchemeComponent socketsElementOwner;
     private Socket connectedSocket;
 
     //private int identificator = this.hashCode();
@@ -217,11 +217,11 @@ public class ConnectionAnchor extends Circle implements ObservableInterface, Con
         this.socketObservers = socketObservers;
     }
 
-    public Movable getSocketsElementOwner() {
+    public SchemeComponent getSocketsElementOwner() {
         return socketsElementOwner;
     }
 
-    public void setSocketsElementOwner(Movable socketsElementOwner) {
+    public void setSocketsElementOwner(SchemeComponent socketsElementOwner) {
         this.socketsElementOwner = socketsElementOwner;
     }
 

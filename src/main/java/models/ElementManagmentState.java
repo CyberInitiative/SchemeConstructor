@@ -1,7 +1,8 @@
 package models;
 
-import static com.gluonapplication.views.PrimaryPresenter.elements;
-import static com.gluonapplication.views.PrimaryPresenter.pointManager;
+import com.gluonapplication.views.PrimaryPresenter;
+//import static com.gluonapplication.views.PrimaryPresenter.elements;
+//import static com.gluonapplication.views.PrimaryPresenter.pointManager;
 import java.util.ArrayList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
@@ -23,22 +24,31 @@ import javafx.scene.shape.Shape;
  */
 public class ElementManagmentState extends State {
 
-    MenuItem itemE1 = new MenuItem("Add Input");
-    MenuItem itemE2 = new MenuItem("Remove Input");
-    MenuItem itemE3 = new MenuItem("Delete");
+    public ElementManagmentState() {
+        super();
+    }
 
-    ContextMenu contextMenuElement = new ContextMenu(itemE1, itemE2, itemE3);
+    public ElementManagmentState(PrimaryPresenter context) {
+        super(context);
+    }
 
-    ContextMenu contextMenuVariable = new ContextMenu();
+    private MenuItem itemE1 = new MenuItem("Add Input");
+    private MenuItem itemE2 = new MenuItem("Remove Input");
+    private MenuItem itemE3 = new MenuItem("Delete");
 
-    MenuItem itemV1 = new MenuItem("Input mode");
-    MenuItem itemV2 = new MenuItem("Output mode");
+    private ContextMenu contextMenuElement = new ContextMenu(itemE1, itemE2, itemE3);
 
-    @Override
+    private ContextMenu contextMenuVariable = new ContextMenu();
+
+    private MenuItem itemV1 = new MenuItem("Input mode");
+    private MenuItem itemV2 = new MenuItem("Output mode");
+
+    private SchemeComponent currentComponent = null;
+
     public void clickProcessing(MouseEvent event) {
         if (event.getTarget().getClass() == Element.class) {
-            Element elem = (Element) event.getTarget();
-            System.out.println("GET SIG: " + elem.getConnectionOutputSocket().getSignal().getVariable());
+            //Element elem = (Element) event.getTarget();
+            //System.out.println("GET SIG: " + elem.getConnectionOutputSocket().getSignal().getVariable());
 
         }
 //        if (event.getTarget().getClass() == Element.class) {
@@ -61,63 +71,59 @@ public class ElementManagmentState extends State {
 
     @Override
     public void pressProcessing(MouseEvent event) {
-        if (event.getTarget() instanceof Movable) {
-            Shape shape = (Shape) event.getTarget();
-            Movable movableInstance = (Movable) event.getTarget();
-            Pane pane = (Pane) event.getSource();
-
-            pressProcessingSocketsSetUp(movableInstance.getInputSockets(), pane);
-            pressProcessingSocketsSetUp(movableInstance.getOutputSockets(), pane);
-
-            movableInstance.setMouseX(event.getSceneX());
-            movableInstance.setMouseY(event.getSceneY());
-            movableInstance.setCorX(shape.getLayoutX());
-            movableInstance.setCorY(shape.getLayoutY());
-            movableInstance.setToFront();
+        if (event.getTarget() instanceof SchemeComponent) {
+            currentComponent = (SchemeComponent) event.getTarget();
+            //currentComponent.prepareToChangePosition(context); // CHANGE
+            //currentComponent.prepareToChangePosition(source);
+            //Pane pane = (Pane) event.getSource();
+            //pressProcessingSocketsSetUp(currentComponent, pane);
+            currentComponent.setMouseX(event.getSceneX());
+            currentComponent.setMouseY(event.getSceneY());
+            currentComponent.setCorX(currentComponent.getLayoutX());
+            currentComponent.setCorY(currentComponent.getLayoutY());
+            currentComponent.setVisualComponentsToFront();
         }
     }
 
-    private void pressProcessingSocketsSetUp(ArrayList<Socket> sockets, Pane pane) {
-        for (Socket socket : sockets) {
-            if (socket.getMainConnectedAnchor() != null) {
-                if (socket.getMainConnectedAnchor().requestConnectionPath() != null) {
-                    var pathLine = socket.getMainConnectedAnchor().requestConnectionPath().getPathPolyline();
-                    if (pathLine != null) {
-                        pane.getChildren().remove(pathLine);
-                    }
-                }
-                socket.getMainConnectedAnchor().requestConnectionLine().setVisible(true);
-            }
-        }
+    private void pressProcessingSocketsSetUp(SchemeComponent comp, Pane pane) {
+        pane.getChildren().remove(comp.getConnectionOutputSocket().getMainConnectedAnchor().requestConnectionPath().getPathPolyline());
+//        for (Socket socket : sockets) {
+//            if (socket.getMainConnectedAnchor() != null) {
+//                if (socket.getMainConnectedAnchor().requestConnectionPath() != null) {
+//                    var pathLine = socket.getMainConnectedAnchor().requestConnectionPath().getPathPolyline();
+//                    if (pathLine != null) {
+//                        source.getChildren().remove(pathLine);
+//                    }
+//                }
+//                socket.getMainConnectedAnchor().requestConnectionLine().setVisible(true);
+//            }
+//        }
     }
 
     @Override
     public void dragProcessing(MouseEvent event) {
-        if (event.getTarget() instanceof Movable) {
-            Shape shape = (Shape) event.getTarget();
-            Movable mov = (Movable) event.getTarget();
+        if (currentComponent != null) {
 
-            shape.setLayoutX(event.getSceneX() - (mov.getMouseX() - mov.getCorX()));
-            shape.setLayoutY(event.getSceneY() - (mov.getMouseY() - mov.getCorY()));
-            int gridx = (int) shape.getLayoutX() / 10;
-            int gridy = (int) shape.getLayoutY() / 10;
+            currentComponent.setLayoutX(event.getSceneX() - (currentComponent.getMouseX() - currentComponent.getCorX()));
+            currentComponent.setLayoutY(event.getSceneY() - (currentComponent.getMouseY() - currentComponent.getCorY()));
+            int gridx = (int) currentComponent.getLayoutX() / 10;
+            int gridy = (int) currentComponent.getLayoutY() / 10;
 
-            shape.setLayoutX((10 * gridx));
-            shape.setLayoutY((10 * gridy));
-            mov.getSymbol().toFront();
+            currentComponent.setLayoutX((10 * gridx));
+            currentComponent.setLayoutY((10 * gridy));
+            currentComponent.getSymbol().toFront();
 
         }
     }
 
     @Override
     public void releaseProcessing(MouseEvent event) {
-        if (event.getTarget() instanceof ObservableInterface & event.getTarget() instanceof Movable) {
-            ObservableInterface observable = (ObservableInterface) event.getTarget();
-            observable.notifyObservers();
-            Movable movableInstance = (Movable) event.getTarget();
-
-            releaseProcessingSocketsSetUp(movableInstance.getInputSockets());
-            releaseProcessingSocketsSetUp(movableInstance.getOutputSockets());
+        if (currentComponent != null) {
+            SchemeComponent schemeComponent = (SchemeComponent) event.getTarget();
+            schemeComponent.notifyObservers();
+            //releaseProcessingSocketsSetUp(movableInstance.getInputSockets());
+            //releaseProcessingSocketsSetUp(movableInstance.getOutputSockets());
+            currentComponent = null;
         }
 
         System.out.println("RELEASED 1");
@@ -130,7 +136,7 @@ public class ElementManagmentState extends State {
                 if (socket.getMainConnectedAnchor().requestConnectionPath() != null) {
                     var ancA = socket.getMainConnectedAnchor().requestConnectionPath().getMediator().getStartConnectionAnchor();
                     var ancB = socket.getMainConnectedAnchor().requestConnectionPath().getMediator().getEndConnectionAnchor();
-                    socket.getMainConnectedAnchor().requestConnectionPath().buildPath(ancA, ancB);
+                    //socket.getMainConnectedAnchor().requestConnectionPath().buildPath(ancA, ancB, source); //CHANGE
                 }
             }
         }

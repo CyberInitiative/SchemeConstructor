@@ -5,6 +5,7 @@ import static com.gluonapplication.views.PrimaryPresenter.sockets;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.beans.property.DoubleProperty;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
@@ -27,7 +28,7 @@ public class Socket extends Circle implements ObserverInterface, ObservableInter
     private ConnectionAnchor mainConnectedAnchor;
     private List<ConnectionAnchor> connectionAnchors = new ArrayList<>();
 
-    private Movable ownerComponent = null;
+    private SchemeComponent ownerComponent = null;
     private boolean connected = false;
 
     private ObserverInterface[][] pointObservers;
@@ -85,7 +86,6 @@ public class Socket extends Circle implements ObserverInterface, ObservableInter
              */
             //}
         } else if (this.getCenterX() == anchor.getCenterX() && this.getCenterY() == anchor.getCenterY() && mainConnectedAnchor != null) {
-            //System.out.println("here");
             connectionAnchors.add(anchor);
             anchor.setConnectedSocket(this);
             anchor.centerXProperty().bind(this.centerXProperty());
@@ -99,8 +99,8 @@ public class Socket extends Circle implements ObserverInterface, ObservableInter
                  */
             }
         } else if ((this.getCenterX() != anchor.getCenterX() | this.getCenterY() != anchor.getCenterY()) && mainConnectedAnchor == anchor) {
+            this.setMainConnectedAnchor(null);
             anchor.setConnectedSocket(null);
-            mainConnectedAnchor = null;
             if (!connectionAnchors.isEmpty()) {
                 mainConnectedAnchor = connectionAnchors.get(0);
             }
@@ -114,7 +114,6 @@ public class Socket extends Circle implements ObserverInterface, ObservableInter
 //        socket.setSignal(this.getSignal());
 //        this.setSignal(temp);
 //    }
-
     @Override
     public void registerObserver(ObserverInterface observer) {
         throw new UnsupportedOperationException("Not supported yet.");
@@ -148,6 +147,18 @@ public class Socket extends Circle implements ObserverInterface, ObservableInter
         }
     }
 
+    public void requestToSetPathLineToNull(Pane source) {
+        if (this.mainConnectedAnchor != null) {
+            if (this.mainConnectedAnchor.requestConnectionPath() != null) {
+                var pathLine = this.mainConnectedAnchor.requestConnectionPath().getPathPolyline();
+                if (pathLine != null) {
+                    source.getChildren().remove(pathLine);
+                }
+            }
+            mainConnectedAnchor.requestConnectionLine().setVisible(true);
+        }
+    }  
+
     @Override
     public String toString() {
         return "Socket: " + "role: " + role + ", sig: " + signal + ", mainAnc: " + mainConnectedAnchor + ", connAnc:" + connectionAnchors
@@ -174,11 +185,11 @@ public class Socket extends Circle implements ObserverInterface, ObservableInter
         return RADIUS;
     }
 
-    public Movable getOwnerElement() {
+    public SchemeComponent getOwnerElement() {
         return ownerComponent;
     }
 
-    public void setOwnerComponent(Movable ownerComponent) {
+    public void setOwnerComponent(SchemeComponent ownerComponent) {
         this.ownerComponent = ownerComponent;
     }
 

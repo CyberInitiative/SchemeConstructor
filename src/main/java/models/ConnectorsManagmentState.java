@@ -1,6 +1,8 @@
 package models;
 
+import com.gluonapplication.views.PrimaryPresenter;
 import static com.gluonapplication.views.PrimaryPresenter.connectors;
+import static com.gluonapplication.views.PrimaryPresenter.sockets;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 
@@ -9,6 +11,14 @@ import javafx.scene.layout.Pane;
  * @author Miroslav Levdikov
  */
 public class ConnectorsManagmentState extends State {
+
+    public ConnectorsManagmentState() {
+        super();
+    }
+
+    public ConnectorsManagmentState(PrimaryPresenter context) {
+        super(context);
+    }
 
     private ConnectionAnchor targetConnectionAnchor = null;
 
@@ -69,27 +79,24 @@ public class ConnectorsManagmentState extends State {
     @Override
     public void releaseProcessing(MouseEvent event) {
         if (event.getTarget().getClass() == Socket.class || event.getTarget().getClass() == ConnectionAnchor.class) {
-            Pane pane = (Pane) event.getSource();
             targetConnectionAnchor.notifyObservers();
+            targetConnectionAnchor.requestConnectionLine().setVisible(false);
             /*
             Необходимо узнать, соединен ли данный Socket с помощью других коннекторов, чтобы исходя из этого
             выбрать нужный конструктор для создания маршрута. 
              */
             if (targetConnectionAnchor.getConnectedSocket() != null && targetConnectionAnchor.getConnectedSocket().getMainConnectedAnchor() != targetConnectionAnchor) {
-
+                targetConnectionAnchor.requestConnectionLine().setVisible(false);
                 var point = targetConnectionAnchor.requestSecondAnchor(targetConnectionAnchor);
                 var clP = targetConnectionAnchor.getConnectedSocket().getMainConnectedAnchor().getMediator().getConnectionPath().getClosestPoint(point.getCenterX(), point.getCenterY());
-                ConnectionPath path = new ConnectionPath(point, clP, pane);
-                targetConnectionAnchor.getMediator().registerPath(path);
-
+                //ConnectionPath path = new ConnectionPath(point, clP, source); //CHANGE
             } else {
-                ConnectionPath path = new ConnectionPath(targetConnectionAnchor, targetConnectionAnchor.requestSecondAnchor(targetConnectionAnchor), pane);
-                targetConnectionAnchor.getMediator().registerPath(path);
+                //targetConnectionAnchor.getMediator().getConnectionPath().buildPath(targetConnectionAnchor, targetConnectionAnchor.requestSecondAnchor(targetConnectionAnchor), source); //CHANGE
             }
             System.out.println("RELEASED 2");
-            targetConnectionAnchor.requestConnectionLine().setVisible(false);
+            //targetConnectionAnchor.notifyObservers();
         }
-        targetConnectionAnchor = null; 
+        targetConnectionAnchor = null;
     }
 
     @Override

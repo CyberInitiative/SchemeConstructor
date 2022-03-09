@@ -6,10 +6,11 @@ models\Facade.class
 models\RPN_Transformator.class
 com\gluonapplication\views\PrimaryPresenter$3.class
 models\PathPoint.class
-models\Movable.class
 models\ElementLine.class
+models\Manipulator.class
 models\FunctionAnalyzer.class
 models\ConnectionPath.class
+models\SchemeComponent.class
 models\Connector.class
 models\ConnectionMediator.class
 com\gluonapplication\views\PrimaryView.class
@@ -25,10 +26,10 @@ models\MyThread.class
 com\gluonapplication\views\PrimaryPresenter$2$2.class
 models\PathPoint$PathPointStatus.class
 com\gluonapplication\views\PrimaryPresenter$1.class
-.netbeans_automatic_build
 models\ConnectionComponent.class
 models\SignalRebuilder.class
 models\ElementManagmentState.class
+models\MoveShemeComponentsTool.class
 models\MyGroup.class
 models\PathPointsManager.class
 models\Element.class

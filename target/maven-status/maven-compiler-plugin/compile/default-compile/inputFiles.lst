@@ -5,8 +5,11 @@ E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\RPN_Transformator.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\com\gluonapplication\views\PrimaryPresenter.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\ConnectionMediator.java
+E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\MoveShemeComponentsTool.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\ElementConnector.java
+E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\Manipulator.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\ElementManagmentState.java
+E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\SchemeComponent.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\ConnectionPath.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\Facade.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\SymbolType.java
@@ -29,5 +32,4 @@ E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\ElementLine.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\com\gluonapplication\views\PrimaryView.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\MyThread.java
-E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\Movable.java
 E:\Users\Мирослав Левдиков\Documents\NetBeansProjects\GluonApplication\src\main\java\models\ConnectionComponent.java

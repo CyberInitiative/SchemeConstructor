@@ -46,6 +46,10 @@ public class ConnectionPath implements ObserverInterface, ConnectionComponent {
     List<PathPoint> openList = new ArrayList<>();
     List<PathPoint> closedList = new ArrayList<>();
 
+    public ConnectionPath() {
+
+    }
+
     public ConnectionPath(ConnectionAnchor startAnchor, ConnectionAnchor endAnchor, Pane pane) {
         this.pane = pane;
         if (startAnchor.getConnectedSocket() != null && endAnchor.getConnectedSocket() != null) {
@@ -64,11 +68,7 @@ public class ConnectionPath implements ObserverInterface, ConnectionComponent {
         generatePolylinePath(pane);
     }
 
-    public void rebuildPath() {
-
-    }
-
-    public void buildPath(ConnectionAnchor startAnchor, ConnectionAnchor endAnchor) {
+    public void buildPath(ConnectionAnchor startAnchor, ConnectionAnchor endAnchor, Pane pane) {
         pathPointsList.clear();
         openList.clear();
         closedList.clear();
@@ -85,6 +85,7 @@ public class ConnectionPath implements ObserverInterface, ConnectionComponent {
                 startPathPoint = endAnchor.getConnectedSocket().getCoveredPathPoint();
             }
         } else {
+            mediator.selfDestroy();
             return;
         }
         generatePath(startPathPoint);

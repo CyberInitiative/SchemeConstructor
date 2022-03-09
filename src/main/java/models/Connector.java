@@ -1,6 +1,7 @@
 package models;
 
 import com.gluonapplication.views.PrimaryPresenter;
+import static com.gluonapplication.views.PrimaryPresenter.connectors;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.layout.Pane;
@@ -22,20 +23,13 @@ public class Connector {
     private boolean isStartConnected = false;
     private boolean isEndConnected = false;
 
-    ConnectionPath connectionPath = null;
+    private ConnectionPath connectionPath = new ConnectionPath();
 
     private DoubleProperty startX;
     private DoubleProperty startY;
     private DoubleProperty endX;
     private DoubleProperty endY;
 
-    private DoubleProperty centerX;
-    private DoubleProperty centerY;
-
-    //double one; //= (startConnector.getCenterX() + endConnector.getCenterX()) / 2;
-    //double two;// = (startConnector.getCenterY() + endConnector.getCenterY()) / 2;
-    //int gridx; //= (int) one / 12;
-    //int gridy;// = (int) two / 12;
     public Connector(Circle circle) {
         startX = new SimpleDoubleProperty(circle.getCenterX());
         startY = new SimpleDoubleProperty(circle.getCenterY());
@@ -45,16 +39,9 @@ public class Connector {
         startConnectionAnchor = new ConnectionAnchor(startX, startY, PrimaryPresenter.sockets);
         endConnectionAnchor = new ConnectionAnchor(endX, endY, PrimaryPresenter.sockets);
 
-        //startConnectionAnchor.setSecondEnd(endConnectionAnchor);
-        //endConnectionAnchor.setSecondEnd(startConnectionAnchor);
         connectionLine = new ElementConnector(startX, startY, endX, endY);
 
-        //startConnectionAnchor.centerXProperty().bind(circle.centerXProperty());
-        //startConnectionAnchor.centerYProperty().bind(circle.centerYProperty());
-        //startConnectionAnchor.setConnectionLine(connectionLine);
-        //endConnectionAnchor.setConnectionLine(connectionLine);
         setAppearance();
-        //listenerForCenter();
     }
 
     public Connector(Circle firstCircle, Circle secondCircle) {
@@ -66,22 +53,21 @@ public class Connector {
         startConnectionAnchor = new ConnectionAnchor(startX, startY, PrimaryPresenter.sockets);
         endConnectionAnchor = new ConnectionAnchor(endX, endY, PrimaryPresenter.sockets);
 
-        //startConnectionAnchor.setSecondEnd(endConnectionAnchor);
-        //endConnectionAnchor.setSecondEnd(startConnectionAnchor);
         connectionLine = new ElementConnector(startX, startY, endX, endY);
 
-        //startConnectionAnchor.centerXProperty().bind(circle.centerXProperty());
-        //startConnectionAnchor.centerYProperty().bind(circle.centerYProperty());
-        //startConnectionAnchor.setConnectionLine(connectionLine);
-        //endConnectionAnchor.setConnectionLine(connectionLine);
         setAppearance();
-        //listenerForCenter();
     }
 
     public void registerComponents() {
         startConnectionAnchor.setMediator(this);
         endConnectionAnchor.setMediator(this);
         connectionLine.setMediator(this);
+        connectionPath.setMediator(this);
+    }
+
+    public void selfDestroy() {
+        connectors.remove(this);
+
     }
 
     public void registerPath(ConnectionPath path) {
@@ -102,7 +88,7 @@ public class Connector {
     private void setAppearance() {
         startConnectionAnchor.setStroke(Color.BLACK);
         endConnectionAnchor.setStroke(Color.BLACK);
-        connectionLine.setStrokeWidth(2);
+        connectionLine.setStrokeWidth(2.5);
         connectionLine.setMouseTransparent(true);
         endConnectionAnchor.toFront();
     }
@@ -111,6 +97,34 @@ public class Connector {
         pane.getChildren().add(connectionLine);
         pane.getChildren().add(startConnectionAnchor);
         pane.getChildren().add(endConnectionAnchor);
+    }
+
+    public void remove(Pane pane) {
+        pane.getChildren().remove(connectionLine);
+        pane.getChildren().remove(startConnectionAnchor);
+        pane.getChildren().remove(endConnectionAnchor);
+        pane.getChildren().remove(connectionPath.getPathPolyline());
+        
+        if(startConnectionAnchor != null){
+            if(startConnectionAnchor.getConnectedSocket() != null){
+                startConnectionAnchor.getConnectedSocket().setMainConnectedAnchor(null);
+            }
+        }
+        if(endConnectionAnchor != null){
+            if(endConnectionAnchor.getConnectedSocket() != null){
+                endConnectionAnchor.getConnectedSocket().setMainConnectedAnchor(null);
+            }
+        }
+//        startConnectionAnchor = null;
+//        endConnectionAnchor = null;
+        connectionLine = null;
+        connectionPath = null;
+
+    }
+
+    @Override
+    public String toString() {
+        return "Connector{" + "startConnectionAnchor=" + startConnectionAnchor + ", endConnectionAnchor=" + endConnectionAnchor + ", connectionLine=" + connectionLine + ", isStartConnected=" + isStartConnected + ", isEndConnected=" + isEndConnected + ", connectionPath=" + connectionPath + ", startX=" + startX + ", startY=" + startY + ", endX=" + endX + ", endY=" + endY + '}';
     }
 
     public ConnectionPath getConnectionPath() {
@@ -160,4 +174,5 @@ public class Connector {
     public void setEndConnectionAnchor(ConnectionAnchor endConnectionAnchor) {
         this.endConnectionAnchor = endConnectionAnchor;
     }
+
 }

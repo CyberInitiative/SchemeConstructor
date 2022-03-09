@@ -36,7 +36,7 @@ import models.State;
 import models.VariableBlock;
 
 public class PrimaryPresenter {
-
+    
     @FXML
     private View primary;
     @FXML
@@ -69,19 +69,19 @@ public class PrimaryPresenter {
     public static ObservableList<Connector> connectors = FXCollections.observableArrayList();
     public static PathPointsManager pointManager = new PathPointsManager();
     public static List<ObserverInterface> sockets = new ArrayList<>();
-
+    
     private final ConnectorsManagmentState connState = new ConnectorsManagmentState();
     private final ElementManagmentState elemState = new ElementManagmentState();
-    private State currentState = elemState;
+    private State currentState;
     private Facade facade = new Facade();
-
+    
     @FXML
     Button addElement;
-
+    
     @FXML
     private Label label = new Label();
     AnimationTimer frameRateMeter = new AnimationTimer() {
-
+        
         @Override
         public void handle(long now) {
             long oldFrameTime = frameTimes[frameTimeIndex];
@@ -98,13 +98,17 @@ public class PrimaryPresenter {
             }
         }
     };
-
+    
     public void initialize() {
+        connState.setContext(this);
+        elemState.setContext(this);
+        currentState = elemState;
+        
         pointManager.generatePoints(workingSpace.getPrefWidth(), workingSpace.getPrefHeight(), 10, 10);
         //pointManager.setOpenedList(pointManager.getAllPathPoints());        
         Image img = new Image("plusEl.png");
         ImageView view = new ImageView(img);
-
+        
         addElement.setGraphic(view);
         frameRateMeter.start();
         grid = new Grid(workingSpace.getPrefWidth(), workingSpace.getPrefHeight(), 10, 10, workingSpace);
@@ -124,6 +128,8 @@ public class PrimaryPresenter {
         //workingSpace.getChildren().addAll(pointManager.getAllPoints());
         scrollPane.setContent(workingSpace);
         scrollPane.setId("www");
+        //connState.setSource(workingSpace);
+        //elemState.setSource(workingSpace);
         //scrollPane.setStyle("-fx-focus-color: transparent;");
 
         primary.showingProperty().addListener((obs, oldValue, newValue) -> {
@@ -133,7 +139,7 @@ public class PrimaryPresenter {
                 appBar.setVisible(false); // 
             }
         });
-
+        
         elements.addListener(new ListChangeListener<Element>() {
             @Override
             public void onChanged(ListChangeListener.Change<? extends Element> c) {
@@ -162,7 +168,7 @@ public class PrimaryPresenter {
                                     }
                                 }
                             }
-
+                            
                         });
                         additem.getConnectionInputSockets().addListener(new ListChangeListener<Socket>() {
                             @Override
@@ -184,7 +190,7 @@ public class PrimaryPresenter {
                 }
             }
         });
-
+        
         blocks.addListener(new ListChangeListener<VariableBlock>() {
             @Override
             public void onChanged(ListChangeListener.Change<? extends VariableBlock> c) {
@@ -209,54 +215,52 @@ public class PrimaryPresenter {
                     }
                 }
             }
-
+            
         });
-
+        
         connectors.addListener(new ListChangeListener<Connector>() {
             @Override
             public void onChanged(ListChangeListener.Change<? extends Connector> c) {
                 while (c.next()) {
                     for (Connector remitem : c.getRemoved()) {
-//                        contollPane.getChildren().remove(remitem);
+                        remitem.remove(workingSpace);
+                        remitem = null;
                     }
                     for (Connector additem : c.getAddedSubList()) {
-
+                        
                         additem.add(workingSpace);
 //                        if (additem.getConnectionPath() != null) {
 //                            workingSpace.getChildren().add(additem.getConnectionPath().getPathPolyline());
 //                        }
-
                     }
                 }
             }
-
+            
         });
 
-        facade.getGenerator().setPane(workingSpace);
-        facade.buildTheScheme(workingSpace);
-
+        // facade.getGenerator().setPane(workingSpace);
+        //facade.buildTheScheme(workingSpace);
         clickEvent();
         pressEvent();
         dragEvent();
         releaseEvent();
-        //elements.addAll(facade.getArr()); //удалить
-        blocks.addAll(facade.getGenerator().getBlocks());
-        facade.getGenerator().setConnectionPaths();
-        connectors.addAll(facade.getGenerator().getConnectors());
+        //blocks.addAll(facade.getGenerator().getBlocks());
+        //facade.getGenerator().setConnectionPaths();
+        //connectors.addAll(facade.getGenerator().getConnectors());
         //System.out.println("1ARRAY: " + facade.getArr());
         //System.out.println("SOCKETs: " + sockets);
         System.out.println("ELEMENTS: " + elements);
     }
-
+    
     private void setPositionForNewElement(Element element) {
         double screenX = (scrollPane.getViewportBounds().getWidth() / 2) - 50;
         double screenY = (scrollPane.getViewportBounds().getHeight() / 2) - 75;
-
+        
         element.setLayoutX(screenX);
         element.setLayoutY(screenY);
-
+        
         Point2D currentCenter = workingSpace.sceneToLocal(element.getLayoutX(), element.getLayoutY());
-
+        
         element.setLayoutX(currentCenter.getX() + 75);
         element.setLayoutY(currentCenter.getY());
         //System.out.println(element.getChildren().get(0).getLayoutY());
@@ -270,70 +274,70 @@ public class PrimaryPresenter {
         //Bounds bounds = element.localToScene(element.getChildren().get(0).getBoundsInLocal());
         //System.out.println(bounds);
     }
-
+    
     @FXML
     private void clearAll() {
         workingSpace.getChildren().clear();
     }
-
+    
     private Point2D getTrueCoordinates(Element node) {
         Point2D coorsOfAnchor = workingSpace.sceneToLocal(node.getCorX(), node.getCorY());
         return coorsOfAnchor;
     }
-
+    
     private void clickEvent() {
         EventHandler<MouseEvent> eventHandler = (MouseEvent event) -> {
             currentState.clickProcessing(event);
         };
         workingSpace.addEventFilter(MouseEvent.MOUSE_CLICKED, eventHandler);
     }
-
+    
     private void pressEvent() {
         EventHandler<MouseEvent> eventHandler = (MouseEvent event) -> {
             currentState.pressProcessing(event);
         };
         workingSpace.addEventFilter(MouseEvent.MOUSE_PRESSED, eventHandler);
     }
-
+    
     private void dragEvent() {
         EventHandler<MouseEvent> eventHandler = (MouseEvent event) -> {
             currentState.dragProcessing(event);
         };
         workingSpace.addEventFilter(MouseEvent.MOUSE_DRAGGED, eventHandler);
     }
-
+    
     private void releaseEvent() {
         EventHandler<MouseEvent> eventHandler = (MouseEvent event) -> {
             currentState.releaseProcessing(event);
         };
         workingSpace.addEventFilter(MouseEvent.MOUSE_RELEASED, eventHandler);
     }
-
+    
     @FXML
     public void pressElementConnectorManagmentTool() {
         //currentState = new ConnectorsManagmentState(); 
         currentState = connState;
     }
-
+    
     @FXML
     public void pressElementManagerTool() {
         currentState = elemState;
     }
-
+    
     @FXML
     private void addNewElement() {
         Element element = new Element(pointManager.getAllPoints());
         element.setOwnerForAllSockets();
         elements.add(element);
     }
-
+    
     @FXML
     private void addNewVariableBlock() {
         VariableBlock block = new VariableBlock(pointManager.getAllPoints());
         block.setOwnerForSocket(block.getConnectionInputSocket());
         blocks.add(block);
     }
-
+    
     @FXML
     private void getSocketInfo() {
 //        for (Element elem : elements) {
@@ -344,7 +348,7 @@ public class PrimaryPresenter {
         elements.get(0).deleteInput();
         System.out.println("DELETED");
     }
-
+    
     @FXML
     private void add() {
         elements.get(0).addInput();

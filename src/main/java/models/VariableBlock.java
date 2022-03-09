@@ -1,10 +1,11 @@
 package models;
 
 import com.gluonapplication.views.PrimaryPresenter;
-import static com.gluonapplication.views.PrimaryPresenter.elements;
+//import static com.gluonapplication.views.PrimaryPresenter.elements;
 import java.util.ArrayList;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
@@ -16,29 +17,16 @@ import javafx.scene.text.Text;
  *
  * @author Miroslav Levdikov
  */
-public class VariableBlock extends Rectangle implements ObservableInterface, Movable {
+public class VariableBlock extends SchemeComponent implements ObservableInterface {
 
     private boolean state = false; //false - выход, true - вход;
 
     private final double BLOCK_WIDTH = 40;
     private final double BLOCK_HEIGHT = 40;
 
-    private double corX = 0; //координаты всего элемента
-    private double corY = 0;
-
-    private double mouseX = 0; //координаты мыши
-    private double mouseY = 0;
-
-    private Text symbol = new Text("?");
-
     //private String variable = String.valueOf(symbol);
     private Socket connectionInputSocket;
     private Line inputLine;
-
-    private Socket connectionOutputSocket;
-    private Line outputLine;
-
-    private ObserverInterface[][] pointObservers;
 
     public VariableBlock(ObserverInterface pointObservers[][]) {
         super(40, 40);
@@ -59,12 +47,12 @@ public class VariableBlock extends Rectangle implements ObservableInterface, Mov
         if (state) {
             bindInputLine();
         } else {
-            bindOutputLine();
+            bindOutput();
         }
 
     }
 
-    private void setNodeVisualDetails() {
+    protected void setNodeVisualDetails() {
         this.setFill(Color.WHITE);
         this.setStroke(Color.BLACK);
         this.setStrokeType(StrokeType.INSIDE);
@@ -80,7 +68,7 @@ public class VariableBlock extends Rectangle implements ObservableInterface, Mov
         socket.setOwnerComponent(this);
     }
 
-    private void bindSymbol() {
+    protected void bindSymbol() {
         DoubleProperty coordX = new SimpleDoubleProperty((40 / 2) - symbol.getTabSize() / 2.3);
         DoubleProperty coordY = new SimpleDoubleProperty(40 / 1.6);
 
@@ -101,17 +89,6 @@ public class VariableBlock extends Rectangle implements ObservableInterface, Mov
         PrimaryPresenter.sockets.add(connectionInputSocket);
     }
 
-    private void bindOutputLine() {
-        DoubleProperty startX = new SimpleDoubleProperty(BLOCK_WIDTH);
-        DoubleProperty startY = new SimpleDoubleProperty(BLOCK_HEIGHT / 2);
-        outputLine = new ElementLine(BLOCK_WIDTH, (BLOCK_HEIGHT / 2), (BLOCK_WIDTH + 10), (BLOCK_HEIGHT / 2), this.layoutXProperty().add(BLOCK_WIDTH), this.layoutYProperty().add(BLOCK_HEIGHT / 2), this.layoutXProperty().add(BLOCK_WIDTH + 10), this.layoutYProperty().add(BLOCK_HEIGHT / 2));
-        connectionOutputSocket = new Socket(startX, startY, Socket.Role.Output);
-        connectionOutputSocket.centerXProperty().bind(this.layoutXProperty().add(BLOCK_WIDTH + 10));
-        connectionOutputSocket.centerYProperty().bind(this.layoutYProperty().add(BLOCK_HEIGHT / 2));
-        PrimaryPresenter.sockets.add(connectionOutputSocket);
-    }
-
-    @Override
     public ArrayList<Socket> getInputSockets() {
         ArrayList<Socket> array = new ArrayList<>();
         if (connectionInputSocket != null) {
@@ -120,19 +97,12 @@ public class VariableBlock extends Rectangle implements ObservableInterface, Mov
         return array;
     }
 
-    @Override
     public ArrayList<Socket> getOutputSockets() {
         ArrayList<Socket> array = new ArrayList<>();
         if (connectionOutputSocket != null) {
             array.add(connectionOutputSocket);
         }
         return array;
-    }
-
-    @Override
-    public void setToFront() {
-        this.toFront();
-        symbol.toFront();
     }
 
     @Override
@@ -242,7 +212,6 @@ public class VariableBlock extends Rectangle implements ObservableInterface, Mov
         this.mouseY = mouseY;
     }
 
-    @Override
     public void setSymbol(Text symbol) {
         this.symbol = symbol;
     }
@@ -275,4 +244,30 @@ public class VariableBlock extends Rectangle implements ObservableInterface, Mov
 //    public void setVariable(String variable) {
 //        this.variable = variable;
 //    }
+    @Override
+    protected void bindOutput() {
+        DoubleProperty startX = new SimpleDoubleProperty(BLOCK_WIDTH);
+        DoubleProperty startY = new SimpleDoubleProperty(BLOCK_HEIGHT / 2);
+        outputLine = new ElementLine(BLOCK_WIDTH, (BLOCK_HEIGHT / 2), (BLOCK_WIDTH + 10), (BLOCK_HEIGHT / 2), this.layoutXProperty().add(BLOCK_WIDTH), this.layoutYProperty().add(BLOCK_HEIGHT / 2), this.layoutXProperty().add(BLOCK_WIDTH + 10), this.layoutYProperty().add(BLOCK_HEIGHT / 2));
+        connectionOutputSocket = new Socket(startX, startY, Socket.Role.Output);
+        connectionOutputSocket.centerXProperty().bind(this.layoutXProperty().add(BLOCK_WIDTH + 10));
+        connectionOutputSocket.centerYProperty().bind(this.layoutYProperty().add(BLOCK_HEIGHT / 2));
+        PrimaryPresenter.sockets.add(connectionOutputSocket);
+    }
+
+    @Override
+    public void setVisualComponentsToFront() {
+        this.toFront();
+        symbol.toFront();
+    }
+
+    @Override
+    public void prepareToChangePosition(Pane source) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void changedPositionReport() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }
