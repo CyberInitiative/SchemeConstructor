@@ -23,8 +23,8 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Line;
 import models.Connector;
-import models.ConnectorsManagmentState;
-import models.ElementManagmentState;
+import models.Tools.ConnectionDrawer;
+import models.Tools.ComponentsMover;
 import models.Element;
 import models.Facade;
 import models.Grid;
@@ -32,11 +32,11 @@ import models.ObserverInterface;
 import models.PathPoint;
 import models.PathPointsManager;
 import models.Socket;
-import models.State;
+import models.Tools.Tool;
 import models.VariableBlock;
 
 public class PrimaryPresenter {
-    
+
     @FXML
     private View primary;
     @FXML
@@ -69,19 +69,19 @@ public class PrimaryPresenter {
     public static ObservableList<Connector> connectors = FXCollections.observableArrayList();
     public static PathPointsManager pointManager = new PathPointsManager();
     public static List<ObserverInterface> sockets = new ArrayList<>();
-    
-    private final ConnectorsManagmentState connState = new ConnectorsManagmentState();
-    private final ElementManagmentState elemState = new ElementManagmentState();
-    private State currentState;
+
+    private final ConnectionDrawer connectionDrawer = new ConnectionDrawer();
+    private final ComponentsMover componentsMover = new ComponentsMover();
+    private Tool currentTool;
     private Facade facade = new Facade();
-    
+
     @FXML
     Button addElement;
-    
+
     @FXML
     private Label label = new Label();
     AnimationTimer frameRateMeter = new AnimationTimer() {
-        
+
         @Override
         public void handle(long now) {
             long oldFrameTime = frameTimes[frameTimeIndex];
@@ -98,40 +98,25 @@ public class PrimaryPresenter {
             }
         }
     };
-    
+
     public void initialize() {
-        connState.setContext(this);
-        elemState.setContext(this);
-        currentState = elemState;
-        
+        connectionDrawer.setContext(this);
+        componentsMover.setContext(this);
+        currentTool = componentsMover;
+
         pointManager.generatePoints(workingSpace.getPrefWidth(), workingSpace.getPrefHeight(), 10, 10);
         //pointManager.setOpenedList(pointManager.getAllPathPoints());        
         Image img = new Image("plusEl.png");
         ImageView view = new ImageView(img);
-        
+
         addElement.setGraphic(view);
         frameRateMeter.start();
         grid = new Grid(workingSpace.getPrefWidth(), workingSpace.getPrefHeight(), 10, 10, workingSpace);
         grid.drawGrid();
 
-//        for (int i = 0; i < pointManager.getAllPoints().length; i++) {
-//            for (int j = 0; j < pointManager.getAllPoints()[0].length; j++) {
-//                for(Element elem : elements){
-//                    if(elem.getBoundsInParent().contains(pointManager.getAllPoints()[i][j])){
-//                        pointManager.getAllPoints()[i][j].setStatus(PathPoint.PathPointStatus.Obstructuion);
-//                        //System.out.println("OBSTR");
-//                    }
-//                }
-//                //System.out.println(pointManager.getAllPoints()[i][j]);
-//            }
-//        }
-        //workingSpace.getChildren().addAll(pointManager.getAllPoints());
         scrollPane.setContent(workingSpace);
         scrollPane.setId("www");
-        //connState.setSource(workingSpace);
-        //elemState.setSource(workingSpace);
-        //scrollPane.setStyle("-fx-focus-color: transparent;");
-
+        
         primary.showingProperty().addListener((obs, oldValue, newValue) -> {
             if (newValue) {
                 AppBar appBar = MobileApplication.getInstance().getAppBar();
@@ -139,7 +124,7 @@ public class PrimaryPresenter {
                 appBar.setVisible(false); // 
             }
         });
-        
+
         elements.addListener(new ListChangeListener<Element>() {
             @Override
             public void onChanged(ListChangeListener.Change<? extends Element> c) {
@@ -168,7 +153,7 @@ public class PrimaryPresenter {
                                     }
                                 }
                             }
-                            
+
                         });
                         additem.getConnectionInputSockets().addListener(new ListChangeListener<Socket>() {
                             @Override
@@ -190,7 +175,7 @@ public class PrimaryPresenter {
                 }
             }
         });
-        
+
         blocks.addListener(new ListChangeListener<VariableBlock>() {
             @Override
             public void onChanged(ListChangeListener.Change<? extends VariableBlock> c) {
@@ -215,9 +200,9 @@ public class PrimaryPresenter {
                     }
                 }
             }
-            
+
         });
-        
+
         connectors.addListener(new ListChangeListener<Connector>() {
             @Override
             public void onChanged(ListChangeListener.Change<? extends Connector> c) {
@@ -227,7 +212,7 @@ public class PrimaryPresenter {
                         remitem = null;
                     }
                     for (Connector additem : c.getAddedSubList()) {
-                        
+
                         additem.add(workingSpace);
 //                        if (additem.getConnectionPath() != null) {
 //                            workingSpace.getChildren().add(additem.getConnectionPath().getPathPolyline());
@@ -235,7 +220,7 @@ public class PrimaryPresenter {
                     }
                 }
             }
-            
+
         });
 
         // facade.getGenerator().setPane(workingSpace);
@@ -251,16 +236,16 @@ public class PrimaryPresenter {
         //System.out.println("SOCKETs: " + sockets);
         System.out.println("ELEMENTS: " + elements);
     }
-    
+
     private void setPositionForNewElement(Element element) {
         double screenX = (scrollPane.getViewportBounds().getWidth() / 2) - 50;
         double screenY = (scrollPane.getViewportBounds().getHeight() / 2) - 75;
-        
+
         element.setLayoutX(screenX);
         element.setLayoutY(screenY);
-        
+
         Point2D currentCenter = workingSpace.sceneToLocal(element.getLayoutX(), element.getLayoutY());
-        
+
         element.setLayoutX(currentCenter.getX() + 75);
         element.setLayoutY(currentCenter.getY());
         //System.out.println(element.getChildren().get(0).getLayoutY());
@@ -274,70 +259,70 @@ public class PrimaryPresenter {
         //Bounds bounds = element.localToScene(element.getChildren().get(0).getBoundsInLocal());
         //System.out.println(bounds);
     }
-    
+
     @FXML
     private void clearAll() {
         workingSpace.getChildren().clear();
     }
-    
+
     private Point2D getTrueCoordinates(Element node) {
         Point2D coorsOfAnchor = workingSpace.sceneToLocal(node.getCorX(), node.getCorY());
         return coorsOfAnchor;
     }
-    
+
     private void clickEvent() {
         EventHandler<MouseEvent> eventHandler = (MouseEvent event) -> {
-            currentState.clickProcessing(event);
+            currentTool.clickProcessing(event);
         };
         workingSpace.addEventFilter(MouseEvent.MOUSE_CLICKED, eventHandler);
     }
-    
+
     private void pressEvent() {
         EventHandler<MouseEvent> eventHandler = (MouseEvent event) -> {
-            currentState.pressProcessing(event);
+            currentTool.pressProcessing(event);
         };
         workingSpace.addEventFilter(MouseEvent.MOUSE_PRESSED, eventHandler);
     }
-    
+
     private void dragEvent() {
         EventHandler<MouseEvent> eventHandler = (MouseEvent event) -> {
-            currentState.dragProcessing(event);
+            currentTool.dragProcessing(event);
         };
         workingSpace.addEventFilter(MouseEvent.MOUSE_DRAGGED, eventHandler);
     }
-    
+
     private void releaseEvent() {
         EventHandler<MouseEvent> eventHandler = (MouseEvent event) -> {
-            currentState.releaseProcessing(event);
+            currentTool.releaseProcessing(event);
         };
         workingSpace.addEventFilter(MouseEvent.MOUSE_RELEASED, eventHandler);
     }
-    
+
     @FXML
     public void pressElementConnectorManagmentTool() {
         //currentState = new ConnectorsManagmentState(); 
-        currentState = connState;
+        currentTool = connectionDrawer;
     }
-    
+
     @FXML
     public void pressElementManagerTool() {
-        currentState = elemState;
+        currentTool = componentsMover;
     }
-    
+
     @FXML
     private void addNewElement() {
         Element element = new Element(pointManager.getAllPoints());
         element.setOwnerForAllSockets();
         elements.add(element);
     }
-    
+
     @FXML
     private void addNewVariableBlock() {
         VariableBlock block = new VariableBlock(pointManager.getAllPoints());
         block.setOwnerForSocket(block.getConnectionInputSocket());
         blocks.add(block);
     }
-    
+
     @FXML
     private void getSocketInfo() {
 //        for (Element elem : elements) {
@@ -348,10 +333,19 @@ public class PrimaryPresenter {
         elements.get(0).deleteInput();
         System.out.println("DELETED");
     }
-    
+
     @FXML
     private void add() {
         elements.get(0).addInput();
         System.out.println("ADDED");
     }
+
+    public Pane getWorkingSpace() {
+        return workingSpace;
+    }
+
+    public void setWorkingSpace(Pane workingSpace) {
+        this.workingSpace = workingSpace;
+    }
+
 }

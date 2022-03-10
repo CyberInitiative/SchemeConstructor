@@ -26,12 +26,9 @@ public class ConnectionAnchor extends Circle implements ObservableInterface, Con
 
     private Connector mediator;
 
-    //private Line connectionLine;
-    //private ConnectionAnchor secondEnd;
     private SchemeComponent socketsElementOwner;
     private Socket connectedSocket;
 
-    //private int identificator = this.hashCode();
     private List<ObserverInterface> socketObservers;
 
     ConnectionAnchor(DoubleProperty x, DoubleProperty y, List<ObserverInterface> socketObservers) {
@@ -65,18 +62,10 @@ public class ConnectionAnchor extends Circle implements ObservableInterface, Con
     public ElementConnector requestConnectionLine() {
         return mediator.getConnectionLine();
     }
-    
-    public ConnectionPath requestConnectionPath(){
+
+    public ConnectionPath requestConnectionPath() {
         return mediator.getConnectionPath();
     }
-//    private void listener(){
-//        centerXProperty().addListener((obj, oldValue, newValue) -> {
-//            System.out.println("V" + newValue);
-//        });
-//        centerYProperty().addListener((obj, oldValue, newValue) -> {
-//            System.out.println("V" + newValue);
-//        });        
-//    }
 
     public Socket getConnectedSocket() {
         return connectedSocket;
@@ -107,27 +96,11 @@ public class ConnectionAnchor extends Circle implements ObservableInterface, Con
     public void setMediator(Connector mediator) { //Component interface
         this.mediator = mediator;
     }
-    
-    public Connector getMediator(){
+
+    public Connector getMediator() {
         return mediator;
     }
-    
-    
 
-//    @Override
-//    public String getName() {
-//        return name;
-//    }
-//    public void setName(String name) {
-//        this.name = name;
-//    }
-//    public int getIdentificator() {
-//        return identificator;
-//    }
-//
-//    public void setIdentificator(int identificator) {
-//        this.identificator = identificator;
-//    }
     public double getCorX() {
         return corX;
     }
@@ -176,16 +149,6 @@ public class ConnectionAnchor extends Circle implements ObservableInterface, Con
         this.isDragging = isDragging;
     }
 
-//    public Connector getMediator() {
-//        return mediator;
-//    }
-
-//    public Line getConnectionLine() {
-//        return connectionLine;
-//    }
-//    public void setConnectionLine(Line connectionLine) {
-//        this.connectionLine = connectionLine;
-//    }
     public boolean isIsConnected() {
         return isConnected;
     }
@@ -194,13 +157,6 @@ public class ConnectionAnchor extends Circle implements ObservableInterface, Con
         this.isConnected = isConnected;
     }
 
-//    public ConnectionAnchor getSecondEnd() {
-//        return secondEnd;
-//    }
-//
-//    public void setSecondEnd(ConnectionAnchor secondEnd) {
-//        this.secondEnd = secondEnd;
-//    }
     public Boolean getStatus() {
         return status;
     }
