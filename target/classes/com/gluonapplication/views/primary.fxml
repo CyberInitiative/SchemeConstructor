@@ -28,16 +28,16 @@
             <RowConstraints />
          </rowConstraints>
          <children>
-            <Button mnemonicParsing="false" onAction="#pressElementManagerTool" text="ELEMENT ADD">
+            <Button fx:id="moverToolButton" mnemonicParsing="false" onAction="#pressElementManagerTool" text="tool 1">
                <font>
                   <Font name="Consolas" size="6.0" />
                </font></Button>
             <Button fx:id="addElement" mnemonicParsing="false" onAction="#addNewElement" text="CREATE" GridPane.rowIndex="1" />
-            <Button mnemonicParsing="false" onAction="#pressElementConnectorManagmentTool" text="Button" GridPane.rowIndex="2" />
-            <Button mnemonicParsing="false" onAction="#getSocketInfo" text="T DEL" GridPane.rowIndex="3" />
-            <Button mnemonicParsing="false" text="Clear" GridPane.rowIndex="4" />
+            <Button mnemonicParsing="false" onAction="#pressElementConnectorManagmentTool" text="tool 2" GridPane.rowIndex="2" />
+            <Button mnemonicParsing="false" text="TEST!" GridPane.rowIndex="3" />
+            <Button mnemonicParsing="false" text="TEST2" GridPane.rowIndex="4" />
             <Button mnemonicParsing="false" onAction="#addNewVariableBlock" text="CR IO" GridPane.rowIndex="6" />
-            <Button mnemonicParsing="false" onAction="#add" text="T AD" GridPane.rowIndex="7" />
+            <Button mnemonicParsing="false" text="T AD" GridPane.rowIndex="7" />
          </children>
       </GridPane>
    </left>
@@ -57,7 +57,7 @@
    <center>
       <ScrollPane fx:id="scrollPane" hbarPolicy="ALWAYS" prefHeight="552.0" prefWidth="295.0" vbarPolicy="ALWAYS" BorderPane.alignment="CENTER">
          <content>
-            <Pane fx:id="workingSpace" prefHeight="1000.0" prefWidth="1000.0" />
+            <Pane fx:id="workspace" prefHeight="1000.0" prefWidth="1000.0" />
          </content>
       </ScrollPane>
    </center>
