@@ -12,13 +12,11 @@ public class GluonApplication extends MobileApplication {
     @Override
     public void init() {
         addViewFactory(PRIMARY_VIEW, () -> new PrimaryView().getView());
-        DrawerManager.buildDrawer(this);    
     }
 
     @Override
     public void postInit(Scene scene) {
-        Swatch.BLUE.assignTo(scene);
-//        scene.getStylesheets().add(GluonApplication.class.getResource("style.css").toExternalForm());
+        Swatch.BLUE.assignTo(scene);        
     }
 
     public static void main(String args[]) {

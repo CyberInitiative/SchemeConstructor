@@ -1,16 +1,22 @@
 package models;
 
+import models.partsOfComponents.Socket;
 import java.util.Comparator;
 import java.util.List;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.shape.Shape;
+import models.observer.IObservable;
+import models.observer.IObserver;
+import models.partsOfComponents.Body;
+import models.partsOfComponents.IComponentsPiece;
+import models.schemeComponents.LogicComponent;
 
 /**
  *
  * @author Miroslav Levdikov
  */
-public class PathPoint extends Point2D implements ObserverInterface {
+public class PathPoint extends Point2D implements IObserver {
 
     public enum PathPointStatus {
         Obstructuion, PartOfPath, Passable, Socket
@@ -38,9 +44,9 @@ public class PathPoint extends Point2D implements ObserverInterface {
         private int priority;
     }
 
-    PathPoint previousPoint = null;
+    private PathPoint previousPoint = null;
 
-    private Shape coveringObject = null;
+    private IComponentsPiece coveringObject = null; //Объект, который находится на точке;
 
     private PathPointStatus status = PathPointStatus.Passable;
     private RelativeDirectionStatus relativeDir = null;
@@ -80,34 +86,92 @@ public class PathPoint extends Point2D implements ObserverInterface {
     }
 
     @Override
-    public void update(ObservableInterface observable) {
-        Shape shape = (Shape) observable;
-        //System.out.println("SHAPE " + shape);
-        if (shape.getBoundsInParent().contains(this)) {
-            if (shape.getClass() == Socket.class) {
-                Socket socket = (Socket) shape;
-                socket.setCoveredPathPoint(this);
+    public void update(IObservable observable) {
+        IComponentsPiece component = (IComponentsPiece) observable;
+
+        if (component.getBoundsInParent().contains(this)) {
+            if (component.getClass() == Socket.class) {
+                Socket socket = (Socket) component;
                 this.setStatus(PathPointStatus.Socket);
-//                System.out.println(socket);
-            } else {
-                this.setStatus(PathPoint.PathPointStatus.Obstructuion);
+                socket.setCoveredPathPoint(this);
+            } else if (component.getClass() == Body.class) {
+                this.setStatus(PathPointStatus.Obstructuion);
             }
-            coveringObject = shape;
-        } else if (!shape.getBoundsInParent().contains(this)) {
-            if (coveringObject != null) {
-                if (!coveringObject.getBoundsInParent().contains(this)) {
-//                    if (shape.getClass() == Socket.class) {
-//                        Socket socket = (Socket) shape;
-//                        socket.setCoveredPathPoint(null);
-//                        System.out.println(socket);
-//                    }
-                    coveringObject = null;
-                    this.setStatus(PathPoint.PathPointStatus.Passable);
-                }
+            this.coveringObject = component;
+
+        } else if (!component.getBoundsInParent().contains(this) && coveringObject != null) {
+            if (coveringObject == component) {
+                coveringObject = null;
+                this.setStatus(PathPointStatus.Passable);
             }
         }
     }
 
+    /*
+    LogicComponent component = (LogicComponent) observable;
+
+        if (component.getBody().getBoundsInParent().contains(this)) {
+            this.setStatus(PathPointStatus.Obstructuion);
+            this.coveringObject = component.getBody();
+        } else if (!component.getBody().getBoundsInParent().contains(this) && coveringObject == null) {
+            if (coveringObject == component.getBody()) {
+                coveringObject = null;
+                this.setStatus(PathPointStatus.Passable);
+            }
+        }
+
+        for (Socket socket : component.getConnectionSockets()) {
+            if (socket.getBoundsInParent().contains(this)) {
+                this.setStatus(PathPointStatus.Socket);
+                coveringObject = socket;
+                socket.setCoveredPathPoint(this);
+            } else if (!socket.getBoundsInParent().contains(this) && coveringObject != null) {
+                if (coveringObject == socket) {
+                    coveringObject = null;
+                    this.setStatus(PathPointStatus.Passable);
+                }
+            }
+        }
+     */
+ /*
+    @Override
+    public void update(IObservable observable) {
+        LogicComponent component = (LogicComponent) observable;
+
+        if (component.getBody().getBoundsInParent().contains(this)) {
+            this.setStatus(PathPointStatus.Obstructuion);
+            this.coveringObject = component.getBody();
+            System.out.println("OBJ CON");
+        } else if (!component.getBody().getBoundsInParent().contains(this) && coveringObject != null) {
+            if (coveringObject == component.getBody() && !coveringObject.getBoundsInParent().contains(this)) {
+                this.coveringObject = null;
+                this.setStatus(PathPoint.PathPointStatus.Passable);
+                System.out.println("OBJ UNCON");
+            }
+        } else if (!component.getBody().getBoundsInParent().contains(this) && coveringObject == null) {
+            this.setStatus(PathPoint.PathPointStatus.Passable);
+        }
+
+        for (Socket socket : component.getConnectionSockets()) {
+            if (socket.getBoundsInParent().contains(this)) {
+                this.setStatus(PathPointStatus.Socket);
+                coveringObject = socket;
+                socket.setCoveredPathPoint(this);
+                System.out.println("SOCKET CON " + socket);
+            } else if (!socket.getBoundsInParent().contains(this) && this.coveringObject != null) {
+                if (!coveringObject.getBoundsInParent().contains(this) && coveringObject == socket) {
+                    socket.setCoveredPathPoint(null);
+                    coveringObject = null;
+                    this.setStatus(PathPoint.PathPointStatus.Passable);
+                    System.out.println("SOCKET UNCON " + socket);
+                }
+            } else if (!socket.getBoundsInParent().contains(this) && coveringObject == null) {
+                this.setStatus(PathPoint.PathPointStatus.Passable);
+            }
+        }
+        //System.out.println("POINT: " + this);
+    }
+     */
     public int getG() {
         return g;
     }
@@ -183,7 +247,7 @@ public class PathPoint extends Point2D implements ObserverInterface {
     @Override
     public String toString() {
         return "PathPoint{" + "X: " + getX() + "; Y: " + getY() + "; status=" + status + ", g=" + g + ", h=" + h + ", f=" + f + ", col=" + col + ", row=" + row + ", nodePriority=" + nodePriority
-                + ", direction: " + getRelativeDir() + '}';
+                + ", direction: " + getRelativeDir() + ", cover: " + coveringObject + '}';
     }
 
 }

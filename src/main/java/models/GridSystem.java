@@ -1,5 +1,7 @@
 package models;
 
+import java.util.ArrayList;
+import java.util.List;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
@@ -8,13 +10,28 @@ import javafx.scene.shape.Line;
  *
  * @author Miroslav Levdikov
  */
-public class Grid {
-
-    public Grid() {
-
+public final class GridSystem {
+    
+    double cellWidth = 10;
+    double cellHeight = 10;
+    
+    public GridSystem(Pane workspace){
+        drawGrid(workspace);
+        generatePoints();
     }
+    
+    private final PathPoint[][] allPoints = new PathPoint[100][100];
 
-    public void drawGrid(double cellWidth, double cellHeight, Pane workspace) {
+    public void generatePoints() {
+        for (int i = 0; i < (1000 / cellHeight); i++) {
+            for (int j = 0; j < (1000 / cellWidth); j++) {
+                PathPoint point = new PathPoint(cellHeight * i, cellWidth * j, i, j);
+                allPoints[i][j] = point;
+            }
+        }
+    }
+    
+    public void drawGrid(Pane workspace) {
         double sceneWidth = workspace.getPrefWidth();
         double sceneHeight = workspace.getPrefHeight();
         for (int i = 0; i < (sceneHeight / cellHeight); i++) {
@@ -34,5 +51,14 @@ public class Grid {
             line.setOpacity(0.50);
             line.toFront();
         }
+    }
+
+    public PathPoint[][] getAllPoints() {
+        return allPoints;
+    }  
+
+    @Override
+    public String toString() {
+        return "GridSystem{" + "cellWidth=" + cellWidth + ", cellHeight=" + cellHeight + ", allPoints=" + allPoints + '}';
     }
 }
